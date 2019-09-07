@@ -14,12 +14,13 @@ int main(int argc, char **argv)
 
     int npix = nside2npix(nside);
 
-    float dot_radius = 0.5;
+    float dot_radius = 0.2;
     float sphere_radius = 5;
 
     //printf("npix: %d\n", npix);
 
     printf("from solid import *\n\n");
+    printf("from solid.utils import *\n\n");
 
     for(int i=0;i<npix;++i){
         double vec[3];
@@ -34,6 +35,8 @@ int main(int argc, char **argv)
             printf("scene += dot%d\n", i);
         }
     }
+
+    printf("scene += color(Green)(sphere(%f,segments=40))\n", sphere_radius);
 
     printf("print(scad_render(scene))\n");
 }
