@@ -16,10 +16,16 @@ d = difference()(
 )
 
 def equilat_tr():
-    #t = polygon([ [0,0], [1,0], [math.cos(60/(2*math.pi)), math.sin(60/(2*math.pi))] ])
     t = polygon([ [0,0], [1,0], [math.cos(60/180*math.pi), math.sin(60/180*math.pi)] ])
 
-    return t
+    mid_x = (math.cos(60/180*math.pi) + 1) / 3
+    mid_y = (math.sin(60/180*math.pi)) / 3
+
+    hole0 = translate([0,0,-1])(cylinder(r=0.05, h=2, segments=20))
+    hole1 = translate([mid_x,mid_y,-1])(cylinder(r=0.05, h=2, segments=20))
+
+
+    return t-hole0-hole1
 
 def hexagon():
     t0 = equilat_tr()
@@ -30,6 +36,7 @@ def hexagon():
     t5 = rotate(a=300, v=UP_VEC)(equilat_tr()) 
 
     h=t0+t1+t2+t3+t4+t5
+    #h=t0
 
     return h
 
