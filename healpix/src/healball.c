@@ -69,9 +69,9 @@ int main(int argc, char **argv)
 
     printf("boundary_vecs = [ [0,0,0] ]\n");
 
-    double boundary_radius = sphere_radius * 1.2;
+    double boundary_radius = sphere_radius * 1.0;
 
-    for(int i=0; i<nside;++i){
+    for(int i=nside-1; i>=0;--i){
         double left_vec[3];
         double right_vec[3];
         double middle_vec[3];
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
         printf("scene += color(Iron)(translate(boundary_vecs[-1])(sphere(%f, segments=10)))\n", dot_radius);
     }
 
-    for(int i=0; i<nside;++i){
+    for(int i=nside-1; i>=0;--i){
         double left_vec[3];
         double right_vec[3];
         double middle_vec[3];
@@ -139,6 +139,21 @@ int main(int argc, char **argv)
         printf("scene += color(Iron)(translate(boundary_vecs[-1])(sphere(%f, segments=10)))\n", dot_radius);
     }
 
+    printf("boundary_faces=[]\n");
+    for(int i=1;i<4*nside;++i){
+        printf("boundary_faces.append([0,%d,%d])\n",i,i+1);
+    }
+    printf("boundary_faces.append([0,%d,1])\n",4*nside);
+
+    printf("boundaries  = color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces))\n");
+    printf("boundaries += rotate(a=90,v=UP_VEC)(color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces)))\n");
+    printf("boundaries += rotate(a=180,v=UP_VEC)(color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces)))\n");
+    printf("boundaries += rotate(a=270,v=UP_VEC)(color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces)))\n");
+    printf("boundaries -= sphere(%f,segments=40)\n", sphere_radius * 0.7);
+
+    printf("scene += boundaries\n");
+
+
 
 #if 0
     double boundary_vec0[3];
@@ -168,7 +183,7 @@ int main(int argc, char **argv)
 
     printf("scene += color(Yellow)(polyhedron(points=[dot_coords[0], dot_coords[1], dot_coords[3]], faces=[ [0,1,2] ]))\n");
 
-    printf("scene += color(Green)(sphere(%f,segments=40))\n", sphere_radius-0.0);
+    printf("scene += color(Green)(sphere(%f,segments=40))\n", sphere_radius * 0.5);
 
 
     printf("print(scad_render(scene))\n");
