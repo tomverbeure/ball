@@ -4,7 +4,7 @@ scene.scad: scene.py Makefile
 	python scene.py > scene.scad
 
 scene.py: healball Makefile
-	./healball 4 > scene.py
+	./healball 16 > scene.py
 
-healball: ./src/healball.c Makefile
-	gcc -o healball -I Healpix_3.50/src/C/subs/ Healpix_3.50/src/C/subs/chealpix.c ./src/healball.c -lm
+healball: ./src/healball.c ./src/chealpix.c Makefile
+	gcc -o healball -I./src ./src/chealpix.c ./src/healball.c -lm
