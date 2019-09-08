@@ -21,53 +21,35 @@ int main(int argc, char **argv)
     printf("from solid import *\n\n");
     printf("from solid.utils import *\n\n");
 
-    printf("sphere_radius = %f\n", sphere_radius);
+    //============================================================
+    // Healpix coordinates for unity sphere
+    //============================================================
+    printf("healpix_fxy = []\n");
+    for(int f=0;f<12;f++){
 
-    printf("dot_coords = []\n");
-    printf("dots = []\n");
+        printf("healpix_xy = []\n");
+        for(int x=0;x<nside;x++){
 
-    double *vecs = malloc(npix * sizeof(double) * 3);
+            printf("healpix_y = []\n");
+            for(int y=0;y<nside;y++){
+                double vec[3];
+                pix2vec_nest(nside, xyf2nest(nside, x, y, f), vec);
 
-    int pix_per_face = npix/12;
+                printf("healpix_y.append([%f,%f,%f])\n", vec[0], vec[1], vec[2]);
+            }
 
-    for(int i=0;i<npix;++i){
-        double *vec = &vecs[i*3];
-        pix2vec_nest(nside, i, vec);
-        //pix2vec_ring(nside, i, vec);
-
-        printf("dot_coords.append([%f,%f,%f])\n", vec[0]*sphere_radius, vec[1]*sphere_radius, vec[2]*sphere_radius);
-
-        printf("dots.append(translate(dot_coords[%d])(sphere(%f, segments=10)))\n", i, dot_radius);
-
-        if (i==0){
-            printf("scene = color(Black)(dots[0])\n");
+            printf("healpix_xy.append(healpix_y)\n");
         }
-        else{
-            printf("scene += color(%s)(dots[%d])\n",
-                    i==xyf2nest(nside, nside-1,       0, 0) ? "Red" :
-                    i==xyf2nest(nside,       0, nside-1, 0) ? "Red" :
-                    i==xyf2nest(nside, nside-1, nside-1, 0) ? "Red" :
 
-                    i==xyf2nest(nside,       0,       0, 1) ? "Black" :
-                    i==xyf2nest(nside, nside-1,       0, 1) ? "Blue" :
-                    i==xyf2nest(nside,       0, nside-1, 1) ? "Blue" :
-                    i==xyf2nest(nside, nside-1, nside-1, 1) ? "Blue" :
-
-                    i<   pix_per_face  ? "Blue"      :
-                    i< 2*pix_per_face  ? "Cyan"      :
-                    i< 3*pix_per_face  ? "Magenta"   :
-                    i< 4*pix_per_face  ? "Yellow"    :
-                    i< 5*pix_per_face  ? "Black"     :
-                    i< 6*pix_per_face  ? "White"     :
-                    i< 7*pix_per_face  ? "Oak"       :
-                    i< 8*pix_per_face  ? "Pine"      :
-                    i< 9*pix_per_face  ? "Birch"     :
-                    i<10*pix_per_face  ? "Iron"      :
-                    i<11*pix_per_face  ? "Steel"     :
-                                         "Stainless"
-                              , i);
-        }
+        printf("healpix_fxy.append(healpix_xy)\n");
     }
+
+
+    printf("sphere_radius = %f\n", sphere_radius);
+    printf("dot_radius = %f\n", dot_radius);
+
+    printf("scene = color(Black)()\n");
+
 
     printf("boundary_vecs = [ [0,0,0] ]\n");
 
@@ -150,6 +132,8 @@ int main(int argc, char **argv)
     //printf("boundaries -= sphere(%f,segments=40)\n", sphere_radius * 0.7);
     
     printf("boundaries += rotate(a=00,v=UP_VEC)(color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces)))\n");
+
+
 
 #if 0
     double boundary_vec0[3];
