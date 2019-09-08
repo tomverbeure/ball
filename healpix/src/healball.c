@@ -21,6 +21,8 @@ int main(int argc, char **argv)
     printf("from solid import *\n\n");
     printf("from solid.utils import *\n\n");
 
+    printf("sphere_radius = %f\n", sphere_radius);
+
     printf("dot_coords = []\n");
     printf("dots = []\n");
 
@@ -131,10 +133,6 @@ int main(int argc, char **argv)
             middle_vec[j] = (left_vec[j] + right_vec[j])/2;
         }
 
-        //printf("scene += color(Red)(translate([%f,%f,%f])(sphere(%f, segments=10)))\n", left_vec[0] *sphere_radius, left_vec[1] *sphere_radius, left_vec[2] *sphere_radius,dot_radius);
-        //printf("scene += color(Red)(translate([%f,%f,%f])(sphere(%f, segments=10)))\n", right_vec[0] *sphere_radius, right_vec[1] *sphere_radius, right_vec[2] *sphere_radius,dot_radius);
-        //printf("scene += color(Iron)(translate([%f,%f,%f])(sphere(%f, segments=10)))\n", middle_vec[0] *sphere_radius, middle_vec[1] *sphere_radius, middle_vec[2] *sphere_radius,dot_radius);
-
         printf("boundary_vecs.append([%f,%f,%f])\n", middle_vec[0] * boundary_radius, middle_vec[1] * boundary_radius, middle_vec[2] * boundary_radius);
         printf("scene += color(Iron)(translate(boundary_vecs[-1])(sphere(%f, segments=10)))\n", dot_radius);
     }
@@ -149,11 +147,9 @@ int main(int argc, char **argv)
     printf("boundaries += rotate(a=90,v=UP_VEC)(color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces)))\n");
     printf("boundaries += rotate(a=180,v=UP_VEC)(color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces)))\n");
     printf("boundaries += rotate(a=270,v=UP_VEC)(color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces)))\n");
-    printf("boundaries -= sphere(%f,segments=40)\n", sphere_radius * 0.7);
-
-    printf("scene += boundaries\n");
-
-
+    //printf("boundaries -= sphere(%f,segments=40)\n", sphere_radius * 0.7);
+    
+    printf("boundaries += rotate(a=00,v=UP_VEC)(color(Yellow)(polyhedron(points=boundary_vecs, faces=boundary_faces)))\n");
 
 #if 0
     double boundary_vec0[3];
@@ -181,12 +177,6 @@ int main(int argc, char **argv)
     //printf("scene += color(Yellow)(polyhedron(points=boundary_vecs, faces=[ [0,1,2], [0,2,3], [0,3,4], [0,4,1], [1,2,4], [3,4,2] ]))\n");
 #endif
 
-    printf("scene += color(Yellow)(polyhedron(points=[dot_coords[0], dot_coords[1], dot_coords[3]], faces=[ [0,1,2] ]))\n");
-
-    printf("scene += color(Green)(sphere(%f,segments=40))\n", sphere_radius * 0.5);
-
-
-    printf("print(scad_render(scene))\n");
 }
 
 
