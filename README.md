@@ -18,6 +18,26 @@ Possibilities:
     * 80 faces, but divide each face into 36 LEDs -> 2880 LEDs
     * 80 faces, but divide each face into 49 LEDs -> 3920 LEDs
 
+* 20 faces printed.
+
+	* 4-sided triangle: 10 LEDs -> 200 LEDs
+	* 5-sided triangle: 15 LEDs
+	* 6-sided triangle: 21 LEDs
+	* 7-sided triangle: 27 LEDs
+	* 8-sided triangle: 35 LEDs -> 700 LEDs
+
+# Plug-in LEDs
+
+* WS2812D-F8: $0.11 for 100+  
+
+	* inner diameter: 8.0mm, outer diameter: 9.2mm
+ 	* [datasheet](https://datasheet.lcsc.com/lcsc/1912111437_TOGIALED-TJ-L5FYTXHMCSLCRGB-A5_C330759.pdf)
+	* [LCSC](https://lcsc.com/product-detail/Light-Emitting-Diodes-span-style-background-color-ff0-LED-span_Worldsemi-WS2812D-F8_C139126.html)
+	* 3.5V -> 5.3V
+	* Needs capacitor and 75 Ohm resistor between VDD/GND per LED
+
+* 
+
 
 
 # References
