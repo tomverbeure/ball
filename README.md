@@ -54,12 +54,18 @@ Possibilities:
 
     "From this it is manifest that the square on the diameter of the sphere is five times 
     the square on the radius of the circle from which the icosahedron has been described, 
-    and that the diameter of the sphere is composed of the side of the hexagon and two of 
+    and that the diameter of the sphere is composed of the side of the pentagon and two of 
     the sides of the decagon inscribed in the same circle."
 
-    Dsphere^2 = 5 * (Rhex^2)
+    Dsphere^2 = 5 * (Rpent^2)
 
-    Rhex = sqrt(Dsphere^2/5) = Dsphere/sqrt(5) = 2 * Rsphere / sqrt(5)
+    Rpent = sqrt(Dsphere^2/5) = Dsphere/sqrt(5) = 2 * Rsphere / sqrt(5)
 
 * [Ad Quadratum Construction and Study of the Regular Polyhedra](http://www.lemeestudies.com/Misc/14.millennium_sphere/products/AdQuadratum.pdf)
+
+* [Freecad scripting tutorial](https://wiki.freecadweb.org/Python_scripting_tutorial)
+
+* [Freecad Topological data scripting](https://wiki.freecadweb.org/Topological_data_scripting)
+
+
 
