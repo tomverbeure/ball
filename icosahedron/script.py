@@ -29,12 +29,18 @@ if None:
 
 
 # All units are in mm
-triangle_side       = 50
+triangle_side       = 54
 sphere_radius       = triangle_side / 4 * math.sqrt(10 + 2 * math.sqrt(5)) 
 penta_radius        = math.sqrt((2 * sphere_radius) ** 2 / 5)
 penta_inner_angle   = math.radians(360 / 5)
 
-nr_leds_per_side    = 11
+nr_leds_per_side    = 5
+
+led_max_radius      = 9.4/2
+led_conn_radius     = 3.9/2
+led_height          = 11
+led_conn_length     = 20
+led_stickout        = 2
 
 if 1:
 
@@ -65,9 +71,9 @@ if 1:
     faces.append(Part.Face(polygon))
 
     shell = Part.makeShell(faces)
-    solid = Part.makeSolid(shell)
+    tetra = Part.makeSolid(shell)
 
-    Part.show(solid)
+    #Part.show(tetra)
 
 if 1:
     # Create LED locations
@@ -76,7 +82,7 @@ if 1:
     tetra_side_angle = main_triangle_verts[0].getAngle(main_triangle_verts[1])
     tetra_side_angle_deg = math.degrees(tetra_side_angle)
 
-    boundary_angle = tetra_side_angle / (nr_leds_per_side + 1) / 2
+    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 2
 
     rotate_inside_normal = main_triangle_verts[0].cross( main_triangle_verts[2].sub(main_triangle_verts[1]).multiply(0.5).add(main_triangle_verts[1]) )
     rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
@@ -116,5 +122,53 @@ if 1:
             led_locations.append(point)
 
     for led_location in led_locations:
-        Draft.makeWire([center, led_location])
+        #Draft.makeWire([center, led_location])
+        pass
+
+if 1:
+    # Create LED holes
+    led_holes = []
+
+    for led_location in led_locations:
+        cyl_big     = Part.makeCylinder(led_max_radius,  led_height)
+        cyl_small   = Part.makeCylinder(led_conn_radius, led_conn_length)
+
+        angle         = led_location.getAngle(Base.Vector(0,0,1))
+        rotate_normal = led_location.cross(Base.Vector(0,0,1))
+
+        # location of the base of the LED
+        loc = Base.Vector(0,0,-(led_height-led_stickout))
+        loc = (App.Rotation(rotate_normal, math.degrees(-angle))).multVec(loc)
+        
+        cyl_big.Placement.Base     = led_location.add(loc)
+        cyl_big.Placement.Rotation = App.Rotation(rotate_normal, math.degrees(-angle))
+
+        led_holes.append(cyl_big)
+
+        loc = Base.Vector(0,0,-(led_height-led_stickout)-led_conn_length)
+        loc = (App.Rotation(rotate_normal, math.degrees(-angle))).multVec(loc)
+
+        cyl_small.Placement.Base     = led_location.add(loc)
+        cyl_small.Placement.Rotation = App.Rotation(rotate_normal, math.degrees(-angle))
+
+        led_holes.append(cyl_small)
+
+        Part.show(cyl_big)
+        Part.show(cyl_small)
+
+    sphere = Part.makeSphere(sphere_radius)
+    sphere = sphere.cut(Part.makeSphere(sphere_radius-15))
+
+    box = Part.makeBox(sphere_radius*2, sphere_radius*2, sphere_radius*2)
+    #box.Placement.Base = Base.Vector(0, -sphere_radius, -sphere_radius)
+    box.Placement.Base = Base.Vector(-sphere_radius, -sphere_radius, 0)
+    #Part.show(box)
+    sphere = sphere.cut(box)
+
+    for led_hole in led_holes:
+        sphere = sphere.cut(led_hole)
+
+    Part.show(sphere)
+
+App.ActiveDocument.recompute()
 

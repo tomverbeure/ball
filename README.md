@@ -31,7 +31,7 @@ Possibilities:
 * WS2812D-F8: $0.11 for 100+  
 
 	* inner diameter: 8.0mm, outer diameter: 9.2mm
- 	* [datasheet](https://datasheet.lcsc.com/lcsc/1912111437_TOGIALED-TJ-L5FYTXHMCSLCRGB-A5_C330759.pdf)
+ 	* [datasheet](https://lcsc.com/product-detail/Light-Emitting-Diodes-span-style-background-color-ff0-LED-span_Worldsemi-WS2812D-F8_C139126.html)
 	* [LCSC](https://lcsc.com/product-detail/Light-Emitting-Diodes-span-style-background-color-ff0-LED-span_Worldsemi-WS2812D-F8_C139126.html)
 	* 3.5V -> 5.3V
 	* Needs capacitor and 75 Ohm resistor between VDD/GND per LED
