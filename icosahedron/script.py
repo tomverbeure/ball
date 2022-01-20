@@ -5,8 +5,10 @@
 import math
 import Part
 import Draft
+import App
 from FreeCAD import Base
 import FreeCADGui as Gui
+import FreeCAD as App
 
 def p2v(p):
 
@@ -32,7 +34,7 @@ sphere_radius       = triangle_side / 4 * math.sqrt(10 + 2 * math.sqrt(5))
 penta_radius        = math.sqrt((2 * sphere_radius) ** 2 / 5)
 penta_inner_angle   = math.radians(360 / 5)
 
-nr_leds_per_side    = 7
+nr_leds_per_side    = 11
 
 if 1:
 
@@ -75,60 +77,44 @@ if 1:
     tetra_side_angle_deg = math.degrees(tetra_side_angle)
 
     boundary_angle = tetra_side_angle / (nr_leds_per_side + 1) / 2
-#    led_angle = tetra_side_angle / (nr_leds_per_side+1)
 
-    #inside_point0   = Draft.makePoint(main_triangle_verts[0][0], main_triangle_verts[0][1], main_triangle_verts[0][2])
-    inside_point0   = v2p(main_triangle_verts[0])
-    rotate_inside   = main_triangle_verts[0].cross( main_triangle_verts[2].sub(main_triangle_verts[1]).multiply(0.5).add(main_triangle_verts[1]) )
-    Draft.rotate(inside_point0, math.degrees(boundary_angle), center=center, axis = rotate_inside, copy=False)
-    Draft.makeWire([center, p2v(inside_point0)])
+    rotate_inside_normal = main_triangle_verts[0].cross( main_triangle_verts[2].sub(main_triangle_verts[1]).multiply(0.5).add(main_triangle_verts[1]) )
+    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
+    inside_point0 = rotate_inside.multVec(main_triangle_verts[0])
 
-    inside_point1   = v2p(main_triangle_verts[1])
-    rotate_inside   = main_triangle_verts[1].cross( main_triangle_verts[2].sub(main_triangle_verts[0]).multiply(0.5).add(main_triangle_verts[0]) )
-    Draft.rotate(inside_point1, math.degrees(boundary_angle), center=center, axis = rotate_inside, copy=False)
-    Draft.makeWire([center, p2v(inside_point1)])
+    rotate_inside_normal = main_triangle_verts[1].cross( main_triangle_verts[2].sub(main_triangle_verts[0]).multiply(0.5).add(main_triangle_verts[0]) )
+    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
+    inside_point1 = rotate_inside.multVec(main_triangle_verts[1])
 
-    inside_point2   = v2p(main_triangle_verts[2])
-    rotate_inside   = main_triangle_verts[2].cross( main_triangle_verts[1].sub(main_triangle_verts[0]).multiply(0.5).add(main_triangle_verts[0]) )
-    Draft.rotate(inside_point2, math.degrees(boundary_angle), center=center, axis = rotate_inside, copy=False)
-    Draft.makeWire([center, p2v(inside_point2)])
+    rotate_inside_normal = main_triangle_verts[2].cross( main_triangle_verts[1].sub(main_triangle_verts[0]).multiply(0.5).add(main_triangle_verts[0]) )
+    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
+    inside_point2 = rotate_inside.multVec(main_triangle_verts[2])
 
-    outside_step_angle = p2v(inside_point0).getAngle(p2v(inside_point2)) / nr_leds_per_side
-    rotate_side0     = p2v(inside_point0).cross(p2v(inside_point2))
-    rotate_side1     = p2v(inside_point1).cross(p2v(inside_point2))
+    outside_step_angle = inside_point0.getAngle(inside_point2) / (nr_leds_per_side-1)
+    rotate_side0     = inside_point0.cross(inside_point2)
+    rotate_side1     = inside_point1.cross(inside_point2)
+
+    led_locations = []
 
     for line_nr in range(nr_leds_per_side):
 
         leds_on_line = nr_leds_per_side - line_nr
 
-        start_point = Draft.rotate(inside_point0, math.degrees(outside_step_angle * line_nr), center=center, axis=rotate_side0, copy=True)
-        end_point   = Draft.rotate(inside_point1, math.degrees(outside_step_angle * line_nr), center=center, axis=rotate_side1, copy=True)
+        start_point = App.Rotation(rotate_side0, math.degrees(outside_step_angle * line_nr)).multVec(inside_point0)
+        end_point   = App.Rotation(rotate_side1, math.degrees(outside_step_angle * line_nr)).multVec(inside_point1)
 
-#        for h in range(v):
-#            rotation_normal = p2v(inside_point0).cross(p2v(inside_point1))
-#            angle = p2v(inside_point0).getAngle(p2v(inside_point1)) / v
+        if leds_on_line == 1:
+            point = start_point
+            led_locations.append(point)
+            continue
 
-            #Draft.rotate(inside_point0, math.degrees(angle * h), center=center, axis=rotation_normal, copy=True)
+        step_angle    = start_point.getAngle(end_point) / (leds_on_line-1)
+        rotate_normal = start_point.cross(end_point)
 
-#    rotation_normal_side0 = (main_triangle_verts[0].cross(main_triangle_verts[2])).normalize()
-#    rotation_normal_side1 = (main_triangle_verts[1].cross(main_triangle_verts[2])).normalize()
-#
-#    start_point = Draft.makePoint(main_triangle_verts[0][0], main_triangle_verts[0][1], main_triangle_verts[0][2])
-#    end_point   = Draft.makePoint(main_triangle_verts[1][0], main_triangle_verts[1][1], main_triangle_verts[1][2])
-#
-#    Draft.rotate(start_point, math.degrees(boundary_angle), center=center, axis = rotation_normal_side0, copy=False)
-#    Draft.rotate(end_point,   math.degrees(boundary_angle), center=center, axis = rotation_normal_side1, copy=False)
-#
-#    Draft.makeWire([center, p2v(start_point)])
-#    Draft.makeWire([center, p2v(end_point)])
-#
-#    Draft.makeWire([center, main_triangle_verts[0]])
+        for led_nr in range(leds_on_line):
+            point = App.Rotation(rotate_normal, math.degrees(step_angle * led_nr)).multVec(start_point)
+            led_locations.append(point)
 
-#    point0 = Draft.rotate(start_point, math.degrees(led_angle/2), center=center, axis= rotation_normal, copy=True)
-#    for i in range(nr_leds_per_side+1):
-#        point = Draft.rotate(point0, math.degrees(led_angle * i), center=center, axis= rotation_normal, copy=True)
-#
-#    start_point = Draft.rotate(start_point, math.degree
-
-        
+    for led_location in led_locations:
+        Draft.makeWire([center, led_location])
 
