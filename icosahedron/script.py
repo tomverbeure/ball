@@ -19,6 +19,34 @@ def v2p(v):
 
     return p
 
+def cut_plane(part, vecs, invert = False, translate = 0):
+
+    vec1 = vecs[1].sub(vecs[0])
+    vec2 = vecs[2].sub(vecs[0])
+
+    if invert:
+        plane_normal = vec2.cross(vec1).normalize()
+    else:
+        plane_normal = vec1.cross(vec2).normalize()
+
+    box_normal  = Base.Vector(0,0,1)
+
+    xy_size     = 1000
+    z_size      = 500
+    box = Part.makeBox(xy_size, xy_size, z_size)
+
+    loc = Base.Vector(-xy_size/2, -xy_size/2, translate)
+    loc = (App.Rotation(box_normal, plane_normal)).multVec(loc)
+    loc = loc.add(vecs[0])
+
+    box.Placement.Base     = loc
+    box.Placement.Rotation = App.Rotation(box_normal, plane_normal)
+
+    #Part.show(box)
+
+    cut = part.common(box)
+    return cut
+
 if None:
     vec1 = Base.Vector(0, 0, 0)
     vec2 = Base.Vector(10, 0, 0)
@@ -29,12 +57,12 @@ if None:
 
 
 # All units are in mm
-triangle_side       = 54
+triangle_side       = 90
 sphere_radius       = triangle_side / 4 * math.sqrt(10 + 2 * math.sqrt(5)) 
 penta_radius        = math.sqrt((2 * sphere_radius) ** 2 / 5)
 penta_inner_angle   = math.radians(360 / 5)
 
-nr_leds_per_side    = 5
+nr_leds_per_side    = 6
 
 led_max_radius      = 9.4/2
 led_conn_radius     = 3.9/2
@@ -71,9 +99,18 @@ if 1:
     faces.append(Part.Face(polygon))
 
     shell = Part.makeShell(faces)
-    tetra = Part.makeSolid(shell)
 
+    tetra = Part.makeSolid(shell)
     #Part.show(tetra)
+
+    point0 = Part.makeSphere(5)
+    point0.Placement.Base = main_triangle_verts[0];
+    Part.show(point0)
+
+    point1 = Part.makeSphere(2.5)
+    point1.Placement.Base = main_triangle_verts[1];
+    Part.show(point1)
+
 
 if 1:
     # Create LED locations
@@ -82,7 +119,7 @@ if 1:
     tetra_side_angle = main_triangle_verts[0].getAngle(main_triangle_verts[1])
     tetra_side_angle_deg = math.degrees(tetra_side_angle)
 
-    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 2
+    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 1.5
 
     rotate_inside_normal = main_triangle_verts[0].cross( main_triangle_verts[2].sub(main_triangle_verts[1]).multiply(0.5).add(main_triangle_verts[1]) )
     rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
@@ -153,22 +190,28 @@ if 1:
 
         led_holes.append(cyl_small)
 
-        Part.show(cyl_big)
-        Part.show(cyl_small)
+        #Part.show(cyl_big)
+        #Part.show(cyl_small)
+
+if 1:
+    # Create sphere segment
 
     sphere = Part.makeSphere(sphere_radius)
-    sphere = sphere.cut(Part.makeSphere(sphere_radius-15))
+    #sphere = sphere.cut(Part.makeSphere(sphere_radius-15))
 
-    box = Part.makeBox(sphere_radius*2, sphere_radius*2, sphere_radius*2)
-    #box.Placement.Base = Base.Vector(0, -sphere_radius, -sphere_radius)
-    box.Placement.Base = Base.Vector(-sphere_radius, -sphere_radius, 0)
-    #Part.show(box)
-    sphere = sphere.cut(box)
-
+if 1:
+    # Cut LED holes
     for led_hole in led_holes:
         sphere = sphere.cut(led_hole)
 
+if 1:
+    # Cut sphere into rounded tetra
+    sphere = cut_plane(sphere, [center, main_triangle_verts[0], main_triangle_verts[2]])
+    sphere = cut_plane(sphere, [center, main_triangle_verts[2], main_triangle_verts[1]])
+    sphere = cut_plane(sphere, [center, main_triangle_verts[1], main_triangle_verts[0]])
+    sphere = cut_plane(sphere, main_triangle_verts, invert = True, translate = -10)
     Part.show(sphere)
+
 
 App.ActiveDocument.recompute()
 
