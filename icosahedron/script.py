@@ -183,7 +183,7 @@ if 1:
             led_locations.append(point)
 
     for led_location in led_locations:
-        #Draft.makeWire([center, led_location])
+        Draft.makeWire([center, led_location])
         pass
 
 if 1: 
@@ -213,7 +213,7 @@ if 1:
 
     for led_location in led_locations:
         i = line_plane_intersection([led_location, center] , pcb_triangle_verts)
-        if 1:
+        if None:
             p = Part.makeSphere(1)
             p.Placement.Base = i
             Part.show(p)
@@ -224,10 +224,15 @@ if 1:
     # Create LED holes
     led_holes = []
 
+    cyl_small   = Part.makeBox(1,3, led_conn_length)
+    cyl_small.Placement.Base = Base.Vector(-0.5, -1.5, 0)
+    Part.show(cyl_small)
+
     for led_location in led_locations:
+        #
+        # LED big cylinder
+        #
         cyl_big     = Part.makeCylinder(led_max_radius,  led_height)
-        cyl_small   = Part.makeCylinder(led_conn_radius, led_conn_length)
-        #cyl_small   = Part.makeBox(1,1, led_conn_length)
 
         angle         = led_location.getAngle(Base.Vector(0,0,1))
         rotate_normal = led_location.cross(Base.Vector(0,0,1))
@@ -241,11 +246,25 @@ if 1:
 
         led_holes.append(cyl_big)
 
-        loc = Base.Vector(0,0,-(led_height-led_stickout)-led_conn_length)
-        loc = (App.Rotation(rotate_normal, math.degrees(-angle))).multVec(loc)
+        #
+        # LED leads hole
+        #
+
+        #cyl_small   = Part.makeCylinder(led_conn_radius, led_conn_length)
+        cyl_small   = Part.makeBox(1,3, led_conn_length)
+
+        rotate_z        = App.Rotation(Base.Vector(0,0,1), 20)
+        rotate_ray      = App.Rotation(rotate_normal, math.degrees(-angle))
+        rotate_final    = rotate_ray.multiply(rotate_z)
+
+        #loc = Base.Vector(0,0,-(led_height-led_stickout)-led_conn_length)
+        loc = Base.Vector(-0.5,-1.5,-(led_height-led_stickout)-led_conn_length)
+        #loc = (App.Rotation(rotate_normal, math.degrees(-angle))).multVec(loc)
+        loc = rotate_final.multVec(loc)
+
 
         cyl_small.Placement.Base     = led_location.add(loc)
-        cyl_small.Placement.Rotation = App.Rotation(rotate_normal, math.degrees(-angle))
+        cyl_small.Placement.Rotation = rotate_final
 
         led_holes.append(cyl_small)
 
