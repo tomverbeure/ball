@@ -47,6 +47,26 @@ def cut_plane(part, vecs, invert = False, translate = 0):
     cut = part.common(box)
     return cut
 
+def line_plane_intersection(line, plane):
+    # https://stackoverflow.com/questions/5666222/3d-line-plane-intersection
+
+    # line = 2 vectors (coordinates)
+    # plane = 3 vectors (coordinates)
+    
+    line_dir = line[1].sub(line[0])
+    plane_normal = plane[1].sub(plane[0]).cross(plane[2].sub(plane[0]))
+
+    dot = line_dir.dot(plane_normal)
+
+    if abs(dot) > 1e-6:
+        w = line[0].sub(plane[0])
+        fac = -plane_normal.dot(w) / dot
+        u = Base.Vector(line_dir).multiply(fac)
+        r = line[0].add(u)
+        return r
+
+    return None
+
 if None:
     vec1 = Base.Vector(0, 0, 0)
     vec2 = Base.Vector(10, 0, 0)
@@ -69,6 +89,10 @@ led_conn_radius     = 3.9/2
 led_height          = 11
 led_conn_length     = 20
 led_stickout        = 2
+
+# Distance between the plane of the 3 main vertices and parallel plane towards the center
+# that will hold the PCB.
+pcb_plane_offset    = 10
 
 if 1:
 
@@ -162,6 +186,40 @@ if 1:
         #Draft.makeWire([center, led_location])
         pass
 
+if 1: 
+    # Find intersection of LED ray with PCB plane
+    main_triangle_center = Base.Vector( 
+            (main_triangle_verts[0][0]+ main_triangle_verts[1][0]+ main_triangle_verts[2][0])/3, 
+            (main_triangle_verts[0][1]+ main_triangle_verts[1][1]+ main_triangle_verts[2][1])/3, 
+            (main_triangle_verts[0][2]+ main_triangle_verts[1][2]+ main_triangle_verts[2][2])/3)
+
+    scale_factor = (main_triangle_center.Length - pcb_plane_offset) / main_triangle_center.Length
+
+    pcb_triangle_verts = [
+        Base.Vector(main_triangle_verts[0]).multiply(scale_factor),
+        Base.Vector(main_triangle_verts[1]).multiply(scale_factor),
+        Base.Vector(main_triangle_verts[2]).multiply(scale_factor),
+    ]
+
+    point0 = Part.makeSphere(5)
+    point0.Placement.Base = pcb_triangle_verts[0];
+    Part.show(point0)
+
+    point1 = Part.makeSphere(2.5)
+    point1.Placement.Base = pcb_triangle_verts[1];
+    Part.show(point1)
+
+    pcb_led_intersection = []
+
+    for led_location in led_locations:
+        i = line_plane_intersection([led_location, center] , pcb_triangle_verts)
+        if 1:
+            p = Part.makeSphere(1)
+            p.Placement.Base = i
+            Part.show(p)
+
+        pcb_led_intersection.append(i)
+
 if 1:
     # Create LED holes
     led_holes = []
@@ -169,6 +227,7 @@ if 1:
     for led_location in led_locations:
         cyl_big     = Part.makeCylinder(led_max_radius,  led_height)
         cyl_small   = Part.makeCylinder(led_conn_radius, led_conn_length)
+        #cyl_small   = Part.makeBox(1,1, led_conn_length)
 
         angle         = led_location.getAngle(Base.Vector(0,0,1))
         rotate_normal = led_location.cross(Base.Vector(0,0,1))
@@ -209,6 +268,7 @@ if 1:
     sphere = cut_plane(sphere, [center, main_triangle_verts[0], main_triangle_verts[2]])
     sphere = cut_plane(sphere, [center, main_triangle_verts[2], main_triangle_verts[1]])
     sphere = cut_plane(sphere, [center, main_triangle_verts[1], main_triangle_verts[0]])
+    #sphere = cut_plane(sphere, main_triangle_verts, invert = True, translate = -pcb_plane_offset)
     sphere = cut_plane(sphere, main_triangle_verts, invert = True, translate = -10)
     Part.show(sphere)
 
