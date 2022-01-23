@@ -34,7 +34,7 @@ def line_plane_intersection(line, plane):
 
     return None
 
-def find_correct_angle(dir_orig, dir_new, desired_angle):
+def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
 
     compensation_angle = 0
 
@@ -45,7 +45,9 @@ def find_correct_angle(dir_orig, dir_new, desired_angle):
 
     cnt = 0;
 
-    while cnt < 1440:
+    angle_accuracy = 10
+
+    while cnt < 50:
         cnt = cnt + 1
 
         dir_rot     = App.Rotation(dir_orig, dir_new).multiply(App.Rotation(dir_orig, compensation_angle))
@@ -76,10 +78,12 @@ def find_correct_angle(dir_orig, dir_new, desired_angle):
         vc1_x = Base.Vector(1, vc1.y, vc1.z)
         angle = math.degrees(vc1_x.sub(vc1).getAngle(vc2.sub(vc1)))
 
-        if (angle-desired_angle) > 0.05:
-            compensation_angle -= 0.025
-        elif (angle-desired_angle) < -0.05:
-            compensation_angle += 0.025
+        if (angle-desired_angle) > angle_accuracy:
+            compensation_angle -= angle_accuracy/2
+        elif (angle-desired_angle) < -angle_accuracy:
+            compensation_angle += angle_accuracy/2
+        elif angle_accuracy > angle_epsilon:
+            angle_accuracy = angle_accuracy / 2
         else:
             break
 
@@ -144,11 +148,11 @@ vc1_x = Base.Vector(0.2, vc1.y, vc1.z)
 
 s(vc1_x, 0.02)
 
-angle = find_correct_angle(dir_orig, dir_new, 0)
+angle = find_correct_angle(dir_orig, dir_new, 0, 1)
 
 b_final = Part.makeBox(v2.x, 0.05, v2.z)
 b_final.Placement.Rotation = dir_rot.multiply(App.Rotation(dir_orig, angle))
-Part.show(b_final)
+#Part.show(b_final)
 
 enclosure = Part.makeBox(1,0.2,10)
 enclosure.Placement.Base = Base.Vector(0,0,-5)
