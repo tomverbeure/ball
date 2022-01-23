@@ -147,6 +147,34 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
 
     return compensation_angle
 
+def create_tetra(verts):
+    # Create tetrahedron from 3 main verticesa and the center vertex
+    faces = []
+
+    center = Base.Vector(0,0,0)
+
+    # Main triangle
+    polygon     = Part.makePolygon([ verts[0], verts[1], verts[2], verts[0] ])
+    faces.append(Part.Face(polygon))
+
+    # Top triangle
+    polygon     = Part.makePolygon([ verts[0], verts[1], center, verts[0] ])
+    faces.append(Part.Face(polygon))
+
+    # Side triangle 1
+    polygon     = Part.makePolygon([ verts[0], verts[2], center, verts[0] ])
+    faces.append(Part.Face(polygon))
+
+    # Side triangle 2
+    polygon     = Part.makePolygon([ verts[1], verts[2], center, verts[1] ])
+    faces.append(Part.Face(polygon))
+
+    shell = Part.makeShell(faces)
+    tetra = Part.makeSolid(shell)
+
+    return tetra
+    #Part.show(tetra)
+
 # All units are in mm
 triangle_side       = 90
 sphere_radius       = triangle_side / 4 * math.sqrt(10 + 2 * math.sqrt(5)) 
@@ -166,12 +194,13 @@ led_stickout        = 2
 pcb_plane_offset    = 10
 
 if 1:
-
-    # First construct the triangle vertices with standard coordinates.
+    #============================================================
+    # Create the triangle vertices
+    #============================================================
 
     center = Base.Vector(0,0,0)
-    faces = []
-
+    
+    # Initially, the vertices are the canonical ones where the plane of the triangle is not aligned with a X plane.
     main_triangle_verts = [
             Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius,  math.sin(penta_inner_angle/2) * penta_radius,  penta_radius/2 ),
             Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius, -math.sin(penta_inner_angle/2) * penta_radius,  penta_radius/2 ),
@@ -179,25 +208,20 @@ if 1:
             ]
     main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
 
-    # Main triangle
-    polygon     = Part.makePolygon([ main_triangle_verts[0], main_triangle_verts[1], main_triangle_verts[2], main_triangle_verts[0] ])
-    faces.append(Part.Face(polygon))
+    # Orthogonal projects of center onto the triangle plane, then rotate this center to coincide with the X axis.
+    center_proj = center.sub(Base.Vector(main_triangle_normal).multiply(main_triangle_normal.dot(center.sub(main_triangle_verts[0]))))
+    rotate_main_verts = App.Rotation(center_proj, Base.Vector(-1, 0, 0))
 
-    # Top triangle
-    polygon     = Part.makePolygon([ main_triangle_verts[0], main_triangle_verts[1], center, main_triangle_verts[0] ])
-    faces.append(Part.Face(polygon))
+    # Rotate the triangle vertices just the same.
+    new_verts = []
+    for vert in main_triangle_verts:
+        new_verts.append(rotate_main_verts.multVec(vert))
 
-    # Side triangle 1
-    polygon     = Part.makePolygon([ main_triangle_verts[0], main_triangle_verts[2], center, main_triangle_verts[0] ])
-    faces.append(Part.Face(polygon))
+    # The triangle vertices now form a plan that is parallel to the YZ plane and perpendicular to the X axis.
+    # This is just easier to deal with later...
+    main_triangle_verts = new_verts
 
-    # Side triangle 2
-    polygon     = Part.makePolygon([ main_triangle_verts[1], main_triangle_verts[2], center, main_triangle_verts[1] ])
-    faces.append(Part.Face(polygon))
-
-    shell = Part.makeShell(faces)
-
-    tetra = Part.makeSolid(shell)
+    #tetra = create_tetra(main_triangle_verts)
     #Part.show(tetra)
 
     point0 = Part.makeSphere(5)
@@ -210,7 +234,9 @@ if 1:
 
 
 if 1:
+    #============================================================
     # Create LED locations
+    #============================================================
 
     # The angle between 2 triangle points in the plane created with the center
     tetra_side_angle = main_triangle_verts[0].getAngle(main_triangle_verts[1])
