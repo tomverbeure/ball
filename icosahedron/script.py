@@ -10,6 +10,8 @@ from FreeCAD import Base
 import FreeCADGui as Gui
 import FreeCAD as App
 
+doc = App.newDocument()
+
 def p2v(p):
 
     return Base.Vector(p.X, p.Y, p.Z)
@@ -67,14 +69,60 @@ def line_plane_intersection(line, plane):
 
     return None
 
-if None:
-    vec1 = Base.Vector(0, 0, 0)
-    vec2 = Base.Vector(10, 0, 0)
-    line = Part.LineSegment(vec1, vec2)
-    edge = line.toShape()
-    Part.show(edge)
-    pass
+def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
 
+    compensation_angle = 0
+
+    center = Base.Vector(0,0,0)
+    v1 = Base.Vector(0, 0, 1)
+    v2 = Base.Vector(1, 0, v1.z)
+    v3 = Base.Vector(v2.x, 0, 0)
+
+    cnt = 0;
+
+    angle_accuracy = 10
+
+    while cnt < 500:
+        cnt = cnt + 1
+
+        dir_rot     = App.Rotation(dir_orig, dir_new).multiply(App.Rotation(dir_orig, compensation_angle))
+        
+        vr1 = dir_rot.multVec(v1)
+        vr2 = dir_rot.multVec(v2)
+        vr3 = dir_rot.multVec(v3)
+        
+        y_plane_coord = 1 
+        y_plane = [ 
+                Base.Vector(0, y_plane_coord, 0),
+                Base.Vector(1, y_plane_coord, 0),
+                Base.Vector(0, y_plane_coord, 1)
+                ]
+        
+        vc1 = line_plane_intersection(
+            [ vr1, center], 
+            y_plane
+            )
+        
+        vc2 = line_plane_intersection(
+            [ vr2, vr3], 
+            y_plane
+            )
+
+        #Draft.makeWire([vc1, vc2])
+        
+        vc1_x = Base.Vector(1, vc1.y, vc1.z)
+        angle = math.degrees(vc1_x.sub(vc1).getAngle(vc2.sub(vc1)))
+
+        if (angle-desired_angle) > angle_accuracy:
+            compensation_angle -= angle_accuracy/4
+        elif (angle-desired_angle) < -angle_accuracy:
+            compensation_angle += angle_accuracy/4
+        elif angle_accuracy > angle_epsilon:
+            angle_accuracy = angle_accuracy / 2
+        else:
+            break
+
+    return compensation_angle
 
 # All units are in mm
 triangle_side       = 90
@@ -105,6 +153,7 @@ if 1:
             #Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius, 0,                                             -penta_radius/2 )
             Base.Vector( -penta_radius, 0,                                             -penta_radius/2 )
             ]
+    main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
 
     # Main triangle
     polygon     = Part.makePolygon([ main_triangle_verts[0], main_triangle_verts[1], main_triangle_verts[2], main_triangle_verts[0] ])
@@ -226,7 +275,10 @@ if 1:
 
     cyl_small   = Part.makeBox(1,3, led_conn_length)
     cyl_small.Placement.Base = Base.Vector(-0.5, -1.5, 0)
-    Part.show(cyl_small)
+    #Part.show(cyl_small)
+
+    center_proj = center.sub(Base.Vector(main_triangle_normal).multiply(main_triangle_normal.dot(center.sub(main_triangle_verts[0]))))
+    Draft.makeWire([center, center_proj])
 
     for led_location in led_locations:
         #
@@ -253,14 +305,21 @@ if 1:
         #cyl_small   = Part.makeCylinder(led_conn_radius, led_conn_length)
         cyl_small   = Part.makeBox(1,3, led_conn_length)
 
-        #rotate_z        = App.Rotation(Base.Vector(0,0,1), 20)
-        rotate_z        = App.Rotation(Base.Vector(0,0,1), 0)
+        i0 = line_plane_intersection([center, led_location], main_triangle_verts)
+        i1 = center_proj
+        i2 = Base.Vector(i1.x, i1.y+1, i1.z)
+        desired_angle = math.degrees((i0.sub(i1)).getAngle(i2.sub(i1)))
+        Draft.makeWire([i1, i0])
+        Draft.makeWire([i1, i2])
+
+        compensation_angle = find_correct_angle(Base.Vector(0,0,1), rotate_normal, -desired_angle)
+
+        rotate_z        = App.Rotation(Base.Vector(0,0,1), compensation_angle)
         rotate_ray      = App.Rotation(rotate_normal, math.degrees(-angle))
         rotate_final    = rotate_ray.multiply(rotate_z)
 
         #loc = Base.Vector(0,0,-(led_height-led_stickout)-led_conn_length)
         loc = Base.Vector(-0.5,-1.5,-(led_height-led_stickout)-led_conn_length)
-        #loc = (App.Rotation(rotate_normal, math.degrees(-angle))).multVec(loc)
         loc = rotate_final.multVec(loc)
 
 
