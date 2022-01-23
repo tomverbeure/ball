@@ -253,7 +253,8 @@ if 1:
         #cyl_small   = Part.makeCylinder(led_conn_radius, led_conn_length)
         cyl_small   = Part.makeBox(1,3, led_conn_length)
 
-        rotate_z        = App.Rotation(Base.Vector(0,0,1), 20)
+        #rotate_z        = App.Rotation(Base.Vector(0,0,1), 20)
+        rotate_z        = App.Rotation(Base.Vector(0,0,1), 0)
         rotate_ray      = App.Rotation(rotate_normal, math.degrees(-angle))
         rotate_final    = rotate_ray.multiply(rotate_z)
 

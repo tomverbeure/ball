@@ -68,4 +68,8 @@ Possibilities:
 * [Freecad Topological data scripting](https://wiki.freecadweb.org/Topological_data_scripting)
 
 
+# FreeCAD gripes
+
+* Base.Vector getAngle -> radians, all other functions -> degrees
+
 
