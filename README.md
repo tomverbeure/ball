@@ -71,5 +71,9 @@ Possibilities:
 # FreeCAD gripes
 
 * Base.Vector getAngle -> radians, all other functions -> degrees
+* Simply viewing actions, such as aligning view to face are not present out of the box
+* aligning a object along an axis is broken.
+* Location of buttons in the toolbar always changes
+* 
 
 

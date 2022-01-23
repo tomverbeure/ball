@@ -9,6 +9,7 @@ import App
 from FreeCAD import Base
 import FreeCADGui as Gui
 import FreeCAD as App
+import PySide
 
 doc = App.newDocument()
 
@@ -70,19 +71,27 @@ def line_plane_intersection(line, plane):
     return None
 
 def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
+    App.Console.PrintMessage("\nfind_correct_angle\n")
+    App.Console.PrintMessage("dir_orig:")
+    App.Console.PrintMessage(dir_orig)
+    App.Console.PrintMessage("\n")
+    App.Console.PrintMessage("dir_new:")
+    App.Console.PrintMessage(dir_new)
+    App.Console.PrintMessage("\n")
 
     compensation_angle = 0
 
     center = Base.Vector(0,0,0)
     v1 = Base.Vector(0, 0, 1)
-    v2 = Base.Vector(1, 0, v1.z)
-    v3 = Base.Vector(v2.x, 0, 0)
+    v2 = Base.Vector(0, 1, 1)
+    v3 = Base.Vector(0, 1, 0)
 
     cnt = 0;
 
     angle_accuracy = 10
 
     while cnt < 500:
+        App.Console.PrintMessage(".")
         cnt = cnt + 1
 
         dir_rot     = App.Rotation(dir_orig, dir_new).multiply(App.Rotation(dir_orig, compensation_angle))
@@ -91,27 +100,41 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
         vr2 = dir_rot.multVec(v2)
         vr3 = dir_rot.multVec(v3)
         
-        y_plane_coord = 1 
-        y_plane = [ 
-                Base.Vector(0, y_plane_coord, 0),
-                Base.Vector(1, y_plane_coord, 0),
-                Base.Vector(0, y_plane_coord, 1)
+        x_plane_coord = 1 
+        x_plane = [ 
+                Base.Vector(x_plane_coord, 0, 0),
+                Base.Vector(x_plane_coord, 1, 0),
+                Base.Vector(x_plane_coord, 0, 1)
                 ]
-        
+
+
         vc1 = line_plane_intersection(
             [ vr1, center], 
-            y_plane
+            x_plane
             )
+
+        if vc1 is None:
+            return 0
+
+            Draft.makeWire([center, vr1])
+            Draft.makeWire([x_plane[0], x_plane[1]])
+            Draft.makeWire([x_plane[0], x_plane[2]])
+            App.Console.PrintMessage(x_plane)
+            App.Console.PrintMessage("\n")
+            App.Console.PrintMessage(vr1)
+            App.Console.PrintMessage("\n")
+            App.Console.PrintMessage(vc1)
+            App.Console.PrintMessage("\n")
+            App.ActiveDocument.recompute()
+            raise Exception("Aborted...")
         
         vc2 = line_plane_intersection(
             [ vr2, vr3], 
-            y_plane
+            x_plane
             )
 
-        #Draft.makeWire([vc1, vc2])
-        
-        vc1_x = Base.Vector(1, vc1.y, vc1.z)
-        angle = math.degrees(vc1_x.sub(vc1).getAngle(vc2.sub(vc1)))
+        vc1_y = Base.Vector(vc1.x, 1, vc1.z)
+        angle = math.degrees(vc1_y.sub(vc1).getAngle(vc2.sub(vc1)))
 
         if (angle-desired_angle) > angle_accuracy:
             compensation_angle -= angle_accuracy/4
@@ -144,14 +167,15 @@ pcb_plane_offset    = 10
 
 if 1:
 
+    # First construct the triangle vertices with standard coordinates.
+
     center = Base.Vector(0,0,0)
     faces = []
 
     main_triangle_verts = [
             Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius,  math.sin(penta_inner_angle/2) * penta_radius,  penta_radius/2 ),
             Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius, -math.sin(penta_inner_angle/2) * penta_radius,  penta_radius/2 ),
-            #Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius, 0,                                             -penta_radius/2 )
-            Base.Vector( -penta_radius, 0,                                             -penta_radius/2 )
+            Base.Vector( -penta_radius, 0,                                                                             -penta_radius/2 )
             ]
     main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
 
@@ -287,7 +311,7 @@ if 1:
         cyl_big     = Part.makeCylinder(led_max_radius,  led_height)
 
         angle         = led_location.getAngle(Base.Vector(0,0,1))
-        rotate_normal = led_location.cross(Base.Vector(0,0,1))
+        rotate_normal = led_location.cross(Base.Vector(0,0,1)).normalize()
 
         # location of the base of the LED
         loc = Base.Vector(0,0,-(led_height-led_stickout))
@@ -312,7 +336,7 @@ if 1:
         Draft.makeWire([i1, i0])
         Draft.makeWire([i1, i2])
 
-        compensation_angle = find_correct_angle(Base.Vector(0,0,1), rotate_normal, -desired_angle)
+        compensation_angle = find_correct_angle(Base.Vector(0,0,1), rotate_normal, desired_angle)
 
         rotate_z        = App.Rotation(Base.Vector(0,0,1), compensation_angle)
         rotate_ray      = App.Rotation(rotate_normal, math.degrees(-angle))
