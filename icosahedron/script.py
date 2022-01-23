@@ -70,7 +70,7 @@ def line_plane_intersection(line, plane):
 
     return None
 
-def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
+def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01):
     App.Console.PrintMessage("\nfind_correct_angle\n")
     App.Console.PrintMessage("dir_orig:")
     App.Console.PrintMessage(dir_orig)
@@ -78,13 +78,16 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
     App.Console.PrintMessage("dir_new:")
     App.Console.PrintMessage(dir_new)
     App.Console.PrintMessage("\n")
+    App.Console.PrintMessage("desired_angle:")
+    App.Console.PrintMessage(desired_angle)
+    App.Console.PrintMessage("\n")
 
     compensation_angle = 0
 
     center = Base.Vector(0,0,0)
-    v1 = Base.Vector(0, 0, 1)
-    v2 = Base.Vector(0, 1, 1)
-    v3 = Base.Vector(0, 1, 0)
+    v1 = Base.Vector(0, 0, 1)       # Z-axis corner
+    v2 = Base.Vector(0, 1, 1)       # Y-shifted Z-axis corner
+    v3 = Base.Vector(0, 1, 0)       # Y-shifted center corner
 
     cnt = 0;
 
@@ -108,33 +111,42 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
                 ]
 
 
+        # Intersection between rotated Z-axis line and X-plane
         vc1 = line_plane_intersection(
-            [ vr1, center], 
+            [ center, vr1], 
             x_plane
             )
 
         if vc1 is None:
-            return 0
-
+            App.Console.PrintMessage("\n================================\n")
             Draft.makeWire([center, vr1])
             Draft.makeWire([x_plane[0], x_plane[1]])
             Draft.makeWire([x_plane[0], x_plane[2]])
+            App.Console.PrintMessage("x_plane:")
             App.Console.PrintMessage(x_plane)
             App.Console.PrintMessage("\n")
+            App.Console.PrintMessage("vr1:")
             App.Console.PrintMessage(vr1)
             App.Console.PrintMessage("\n")
+            App.Console.PrintMessage("vc1:")
             App.Console.PrintMessage(vc1)
             App.Console.PrintMessage("\n")
+            return 0
             App.ActiveDocument.recompute()
             raise Exception("Aborted...")
         
+        # Intersection between rotated Y-shifted Z-axis line and X-plane
         vc2 = line_plane_intersection(
-            [ vr2, vr3], 
+            [ vr3, vr2 ], 
             x_plane
             )
 
-        vc1_y = Base.Vector(vc1.x, 1, vc1.z)
-        angle = math.degrees(vc1_y.sub(vc1).getAngle(vc2.sub(vc1)))
+        #vc1_y = Base.Vector(vc1.x, 1, vc1.z)
+        angle = math.degrees(Base.Vector(0,1,0).getAngle(vc2.sub(vc1)))
+
+        #App.Console.PrintMessage("angle:")
+        #App.Console.PrintMessage(angle)
+        #App.Console.PrintMessage("\n")
 
         if (angle-desired_angle) > angle_accuracy:
             compensation_angle -= angle_accuracy/4
@@ -144,6 +156,12 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.1):
             angle_accuracy = angle_accuracy / 2
         else:
             break
+
+    App.Console.PrintMessage("compensation_angle:")
+    App.Console.PrintMessage(compensation_angle)
+    App.Console.PrintMessage("\n")
+
+    Draft.makeWire([vc1, vc2])
 
     return compensation_angle
 
@@ -220,6 +238,7 @@ if 1:
     # The triangle vertices now form a plan that is parallel to the YZ plane and perpendicular to the X axis.
     # This is just easier to deal with later...
     main_triangle_verts = new_verts
+    main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
 
     #tetra = create_tetra(main_triangle_verts)
     #Part.show(tetra)
@@ -358,11 +377,13 @@ if 1:
         i0 = line_plane_intersection([center, led_location], main_triangle_verts)
         i1 = center_proj
         i2 = Base.Vector(i1.x, i1.y+1, i1.z)
-        desired_angle = math.degrees((i0.sub(i1)).getAngle(i2.sub(i1)))
+        desired_angle = 90-math.degrees((i0.sub(i1)).getAngle(i2.sub(i1)))
         Draft.makeWire([i1, i0])
         Draft.makeWire([i1, i2])
 
-        compensation_angle = find_correct_angle(Base.Vector(0,0,1), rotate_normal, desired_angle)
+        compensation_angle = find_correct_angle(Base.Vector(0,0,1), led_location, desired_angle)
+        #compensation_angle = find_correct_angle(Base.Vector(0,0,1), led_location, 0)
+        #compensation_angle = 0
 
         rotate_z        = App.Rotation(Base.Vector(0,0,1), compensation_angle)
         rotate_ray      = App.Rotation(rotate_normal, math.degrees(-angle))
@@ -380,6 +401,7 @@ if 1:
 
         #Part.show(cyl_big)
         #Part.show(cyl_small)
+
 
 if 1:
     # Create sphere segment
@@ -403,4 +425,6 @@ if 1:
 
 
 App.ActiveDocument.recompute()
+Gui.activeDocument().activeView().viewRight()
+Gui.SendMsgToActiveView("ViewFit")
 
