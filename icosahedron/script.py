@@ -350,20 +350,19 @@ if 1:
     Draft.makeWire([center, center_proj])
 
     for led_location in led_locations:
+        rotate_led = App.Rotation(Base.Vector(0,0,1),led_location)
+
         #
         # LED big cylinder
         #
         cyl_big     = Part.makeCylinder(led_max_radius,  led_height)
 
-        angle         = led_location.getAngle(Base.Vector(0,0,1))
-        rotate_normal = led_location.cross(Base.Vector(0,0,1)).normalize()
-
         # location of the base of the LED
         loc = Base.Vector(0,0,-(led_height-led_stickout))
-        loc = (App.Rotation(rotate_normal, math.degrees(-angle))).multVec(loc)
+        loc = rotate_led.multVec(loc)
         
         cyl_big.Placement.Base     = led_location.add(loc)
-        cyl_big.Placement.Rotation = App.Rotation(rotate_normal, math.degrees(-angle))
+        cyl_big.Placement.Rotation = rotate_led
 
         led_holes.append(cyl_big)
 
@@ -386,8 +385,7 @@ if 1:
         #compensation_angle = 0
 
         rotate_z        = App.Rotation(Base.Vector(0,0,1), compensation_angle)
-        rotate_ray      = App.Rotation(rotate_normal, math.degrees(-angle))
-        rotate_final    = rotate_ray.multiply(rotate_z)
+        rotate_final    = rotate_led.multiply(rotate_z)
 
         #loc = Base.Vector(0,0,-(led_height-led_stickout)-led_conn_length)
         loc = Base.Vector(-0.5,-1.5,-(led_height-led_stickout)-led_conn_length)
