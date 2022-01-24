@@ -375,8 +375,11 @@ if 1:
     for led_location in led_locations:
     #led_location = led_locations[5]
     #if True:
+<<<<<<< Updated upstream
         rotate_led = App.Rotation(Base.Vector(0,0,1),led_location)
 
+=======
+>>>>>>> Stashed changes
         #
         # LED big cylinder
         #
