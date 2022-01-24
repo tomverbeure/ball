@@ -285,7 +285,7 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
             led_locations.append(point)
 
     for led_location in led_locations:
-        #Draft.makeWire([center, led_location])
+        Draft.makeWire([center, led_location])
         pass
 
     return led_locations
@@ -310,6 +310,10 @@ led_shaft_height    = 2                     # Height of the LED connector shaft
 # Distance between the plane of the 3 main vertices and parallel plane towards the center
 # that will hold the PCB.
 pcb_plane_offset    = 10
+
+# screw inserts for M2 screws
+screw_insert_radius = 1.6
+screw_insert_height = 3 
 
 center              = Base.Vector(0,0,0)
 
@@ -431,8 +435,8 @@ if 1:
 
         led_holes.append(led_shaft)
 
-        Part.show(cyl_big)
-        Part.show(led_shaft)
+#        Part.show(cyl_big)
+#        Part.show(led_shaft)
 
 if 1:
     # Create sphere segment
@@ -451,8 +455,23 @@ if 1:
     sphere = cut_plane(sphere, [center, main_triangle_verts[2], main_triangle_verts[1]])
     sphere = cut_plane(sphere, [center, main_triangle_verts[1], main_triangle_verts[0]])
     sphere = cut_plane(sphere, main_triangle_verts, invert = True, translate = -pcb_plane_offset)
-    Part.show(sphere)
+    #Part.show(sphere)
 
+if 1: 
+    # Cut screw insert holes
+    insert_locations = []
+    insert_locations.append(Base.Vector(pcb_led_intersection[0].add(pcb_led_intersection[1]).add(pcb_led_intersection[nr_leds_per_side])).multiply(1/3))
+    insert_locations.append(Base.Vector(pcb_led_intersection[nr_leds_per_side-2].add(pcb_led_intersection[nr_leds_per_side-1]).add(pcb_led_intersection[2*nr_leds_per_side-2])).multiply(1/3))
+    t = nr_leds_per_side * (nr_leds_per_side+1)//2
+    insert_locations.append(Base.Vector(pcb_led_intersection[t-3].add(pcb_led_intersection[t-2]).add(pcb_led_intersection[t-1])).multiply(1/3))
+
+    for insert_loc in insert_locations:
+        insert_cyl  = Part.makeCylinder(screw_insert_radius, screw_insert_height)
+        insert_cyl.Placement.Base = insert_loc
+        insert_cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(-1,0,0))
+        sphere = sphere.cut(insert_cyl)
+
+    Part.show(sphere)
 
 App.ActiveDocument.recompute()
 Gui.activeDocument().activeView().viewRight()

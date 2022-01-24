@@ -21,10 +21,10 @@ Possibilities:
 * 20 faces printed.
 
 	* 4-sided triangle: 10 LEDs -> 200 LEDs
-	* 5-sided triangle: 15 LEDs
-	* 6-sided triangle: 21 LEDs
-	* 7-sided triangle: 27 LEDs
-	* 8-sided triangle: 35 LEDs -> 700 LEDs
+	* 5-sided triangle: 15 LEDs -> 300 
+	* 6-sided triangle: 21 LEDs -> 420
+	* 7-sided triangle: 27 LEDs -> 540
+	* 8-sided triangle: 35 LEDs -> 700 
 
 # Plug-in LEDs
 
@@ -36,8 +36,8 @@ Possibilities:
 	* 3.5V -> 5.3V
 	* Needs capacitor and 75 Ohm resistor between VDD/GND per LED
 
-* 
-
+* [75Ohm resistor](https://lcsc.com/product-detail/Chip-Resistor-Surface-Mount_FOJAN-FRC0603J750-TS_C2907204.html)
+* [100nF cap](https://lcsc.com/product-detail/Multilayer-Ceramic-Capacitors-MLCC-SMD-SMT_FH-Guangdong-Fenghua-Advanced-Tech-0603B104K250NT_C694249.html)
 
 
 # References
