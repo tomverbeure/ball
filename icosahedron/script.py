@@ -192,6 +192,36 @@ def create_tetra(verts):
 
     return tetra
 
+def create_triangle_vertices(penta_radius):
+    #============================================================
+    # Create the triangle vertices
+    #============================================================
+
+    
+    # Initially, the vertices are the canonical ones where the plane of the triangle is not aligned with a X plane.
+    main_triangle_verts = [
+            Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius,  math.sin(penta_inner_angle/2) * penta_radius,  penta_radius/2 ),
+            Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius, -math.sin(penta_inner_angle/2) * penta_radius,  penta_radius/2 ),
+            Base.Vector( -penta_radius, 0,                                                                             -penta_radius/2 )
+            ]
+    main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
+
+    # Orthogonal projects of center onto the triangle plane, then rotate this center to coincide with the X axis.
+    center_proj = center.sub(Base.Vector(main_triangle_normal).multiply(main_triangle_normal.dot(center.sub(main_triangle_verts[0]))))
+    rotate_main_verts = App.Rotation(center_proj, Base.Vector(-1, 0, 0))
+
+    # Rotate the triangle vertices just the same.
+    new_verts = []
+    for vert in main_triangle_verts:
+        new_verts.append(rotate_main_verts.multVec(vert))
+
+    # The triangle vertices now form a plan that is parallel to the YZ plane and perpendicular to the X axis.
+    # This is just easier to deal with later...
+    main_triangle_verts = new_verts
+    main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
+
+    return main_triangle_verts
+
 def create_led_locations(triangle_verts, nr_leds_per_side):
     #============================================================
     # Create LED locations
@@ -263,48 +293,11 @@ led_stickout        = 2
 # that will hold the PCB.
 pcb_plane_offset    = 10
 
-if 1:
-    #============================================================
-    # Create the triangle vertices
-    #============================================================
+center              = Base.Vector(0,0,0)
 
-    center = Base.Vector(0,0,0)
-    
-    # Initially, the vertices are the canonical ones where the plane of the triangle is not aligned with a X plane.
-    main_triangle_verts = [
-            Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius,  math.sin(penta_inner_angle/2) * penta_radius,  penta_radius/2 ),
-            Base.Vector( -math.cos(penta_inner_angle/2) * penta_radius, -math.sin(penta_inner_angle/2) * penta_radius,  penta_radius/2 ),
-            Base.Vector( -penta_radius, 0,                                                                             -penta_radius/2 )
-            ]
-    main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
-
-    # Orthogonal projects of center onto the triangle plane, then rotate this center to coincide with the X axis.
-    center_proj = center.sub(Base.Vector(main_triangle_normal).multiply(main_triangle_normal.dot(center.sub(main_triangle_verts[0]))))
-    rotate_main_verts = App.Rotation(center_proj, Base.Vector(-1, 0, 0))
-
-    # Rotate the triangle vertices just the same.
-    new_verts = []
-    for vert in main_triangle_verts:
-        new_verts.append(rotate_main_verts.multVec(vert))
-
-    # The triangle vertices now form a plan that is parallel to the YZ plane and perpendicular to the X axis.
-    # This is just easier to deal with later...
-    main_triangle_verts = new_verts
-    main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
-
-    #tetra = create_tetra(main_triangle_verts)
-    #Part.show(tetra)
-
-    point0 = Part.makeSphere(5)
-    point0.Placement.Base = main_triangle_verts[0];
-    Part.show(point0)
-
-    point1 = Part.makeSphere(2.5)
-    point1.Placement.Base = main_triangle_verts[1];
-    Part.show(point1)
-
-
-led_locations = create_led_locations(main_triangle_verts, nr_leds_per_side)
+main_triangle_verts     = create_triangle_vertices(penta_radius)
+main_triangle_normal    = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
+led_locations           = create_led_locations(main_triangle_verts, nr_leds_per_side)
 
 if 1: 
     # Find intersection of LED ray with PCB plane
@@ -321,24 +314,25 @@ if 1:
         Base.Vector(main_triangle_verts[2]).multiply(scale_factor),
     ]
 
-    point0 = Part.makeSphere(5)
-    point0.Placement.Base = pcb_triangle_verts[0];
-    Part.show(point0)
-
-    point1 = Part.makeSphere(2.5)
-    point1.Placement.Base = pcb_triangle_verts[1];
-    Part.show(point1)
+    if 1:
+        point0 = Part.makeSphere(5)
+        point0.Placement.Base = pcb_triangle_verts[0];
+        Part.show(point0)
+    
+        point1 = Part.makeSphere(2.5)
+        point1.Placement.Base = pcb_triangle_verts[1];
+        Part.show(point1)
 
     pcb_led_intersection = []
 
     for led_location in led_locations:
         i = line_plane_intersection([led_location, center] , pcb_triangle_verts)
+        pcb_led_intersection.append(i)
+
         if None:
             p = Part.makeSphere(1)
             p.Placement.Base = i
             Part.show(p)
-
-        pcb_led_intersection.append(i)
 
 if 1:
     # Create LED holes
