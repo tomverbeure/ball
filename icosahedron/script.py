@@ -82,6 +82,12 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01):
     App.Console.PrintMessage(desired_angle)
     App.Console.PrintMessage("\n")
 
+#    desired_angle = (desired_angle + 360) % 360
+#
+#    App.Console.PrintMessage("desired_angle:")
+#    App.Console.PrintMessage(desired_angle)
+#    App.Console.PrintMessage("\n")
+
     compensation_angle = 0
 
     center = Base.Vector(0,0,0)
@@ -91,9 +97,9 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01):
 
     cnt = 0;
 
-    angle_accuracy = 10
+    angle_accuracy = 30
 
-    while cnt < 500:
+    while cnt < 20:
         App.Console.PrintMessage(".")
         cnt = cnt + 1
 
@@ -142,20 +148,41 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01):
             )
 
         #vc1_y = Base.Vector(vc1.x, 1, vc1.z)
-        angle = math.degrees(Base.Vector(0,1,0).getAngle(vc2.sub(vc1)))
+        angle1 = math.degrees( Base.Vector(0,1,0).getAngle(Base.Vector(vc2.sub(vc1))) )
+        angle2 = math.degrees( Base.Vector(vc2.sub(vc1)).getAngle(Base.Vector(0,1,0)) )
+        angle  = angle1
 
-        #App.Console.PrintMessage("angle:")
-        #App.Console.PrintMessage(angle)
-        #App.Console.PrintMessage("\n")
+
+#        App.Console.PrintMessage("angle1:")
+#        App.Console.PrintMessage(angle1)
+#        App.Console.PrintMessage("\n")
+#        App.Console.PrintMessage("angle2:")
+#        App.Console.PrintMessage(angle2)
+#        App.Console.PrintMessage("\n")
+
+        delta_angle = angle-desired_angle
+
+#        App.Console.PrintMessage("delta_angle:")
+#        App.Console.PrintMessage(delta_angle)
+#        App.Console.PrintMessage("\n")
 
         if (angle-desired_angle) > angle_accuracy:
+            App.Console.PrintMessage("-\n")
             compensation_angle -= angle_accuracy/4
         elif (angle-desired_angle) < -angle_accuracy:
             compensation_angle += angle_accuracy/4
+            App.Console.PrintMessage("+\n")
         elif angle_accuracy > angle_epsilon:
+            App.Console.PrintMessage("0\n")
             angle_accuracy = angle_accuracy / 2
         else:
             break
+
+        App.Console.PrintMessage("compensation_angle:")
+        App.Console.PrintMessage(compensation_angle)
+        App.Console.PrintMessage("\n")
+
+        Draft.makeWire([vc1, vc2])
 
     App.Console.PrintMessage("compensation_angle:")
     App.Console.PrintMessage(compensation_angle)
@@ -270,7 +297,7 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
             led_locations.append(point)
 
     for led_location in led_locations:
-        Draft.makeWire([center, led_location])
+        #Draft.makeWire([center, led_location])
         pass
 
     return led_locations
@@ -340,12 +367,14 @@ if 1:
 
     cyl_small   = Part.makeBox(1,3, led_conn_length)
     cyl_small.Placement.Base = Base.Vector(-0.5, -1.5, 0)
-    #Part.show(cyl_small)
+    Part.show(cyl_small)
 
     center_proj = center.sub(Base.Vector(main_triangle_normal).multiply(main_triangle_normal.dot(center.sub(main_triangle_verts[0]))))
     Draft.makeWire([center, center_proj])
 
     for led_location in led_locations:
+    #led_location = led_locations[5]
+    #if True:
         rotate_led = App.Rotation(Base.Vector(0,0,1),led_location)
 
         #
@@ -372,9 +401,21 @@ if 1:
         i0 = line_plane_intersection([center, led_location], main_triangle_verts)
         i1 = center_proj
         i2 = Base.Vector(i1.x, i1.y+1, i1.z)
-        desired_angle = 90-math.degrees((i0.sub(i1)).getAngle(i2.sub(i1)))
-        Draft.makeWire([i1, i0])
-        Draft.makeWire([i1, i2])
+        angle_to_center = math.degrees((i0.sub(i1)).getAngle(i2.sub(i1)))
+        App.Console.PrintMessage("angle_to_center:")
+        App.Console.PrintMessage(angle_to_center)
+        App.Console.PrintMessage("\n")
+        App.Console.PrintMessage("i0:")
+        App.Console.PrintMessage(i0)
+        App.Console.PrintMessage("\n")
+
+        if i0.y > 0 and i0.z > 0:
+            desired_angle = 90-angle_to_center
+        else:
+            desired_angle = 0
+
+#        Draft.makeWire([i1, i0])
+#        Draft.makeWire([i1, i2])
 
         compensation_angle = find_correct_angle(Base.Vector(0,0,1), led_location, desired_angle)
         #compensation_angle = find_correct_angle(Base.Vector(0,0,1), led_location, 0)
