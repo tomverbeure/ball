@@ -70,7 +70,7 @@ def line_plane_intersection(line, plane):
 
     return None
 
-def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01):
+def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01, search_dir = 1):
     App.Console.PrintMessage("\nfind_correct_angle\n")
     App.Console.PrintMessage("dir_orig:")
     App.Console.PrintMessage(dir_orig)
@@ -125,7 +125,6 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01):
 
         if vc1 is None:
             App.Console.PrintMessage("\n================================\n")
-            Draft.makeWire([center, vr1])
             Draft.makeWire([x_plane[0], x_plane[1]])
             Draft.makeWire([x_plane[0], x_plane[2]])
             App.Console.PrintMessage("x_plane:")
@@ -147,30 +146,23 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01):
             x_plane
             )
 
-        #vc1_y = Base.Vector(vc1.x, 1, vc1.z)
-        angle1 = math.degrees( Base.Vector(0,1,0).getAngle(Base.Vector(vc2.sub(vc1))) )
-        angle2 = math.degrees( Base.Vector(vc2.sub(vc1)).getAngle(Base.Vector(0,1,0)) )
-        angle  = angle1
+        angle  = math.degrees( Base.Vector(0,1,0).getAngle(Base.Vector(vc2.sub(vc1))) )
 
-
-#        App.Console.PrintMessage("angle1:")
-#        App.Console.PrintMessage(angle1)
-#        App.Console.PrintMessage("\n")
-#        App.Console.PrintMessage("angle2:")
-#        App.Console.PrintMessage(angle2)
-#        App.Console.PrintMessage("\n")
+        App.Console.PrintMessage("angle:")
+        App.Console.PrintMessage(angle)
+        App.Console.PrintMessage("\n")
 
         delta_angle = angle-desired_angle
 
-#        App.Console.PrintMessage("delta_angle:")
-#        App.Console.PrintMessage(delta_angle)
-#        App.Console.PrintMessage("\n")
+        App.Console.PrintMessage("delta_angle:")
+        App.Console.PrintMessage(delta_angle)
+        App.Console.PrintMessage("\n")
 
         if (angle-desired_angle) > angle_accuracy:
             App.Console.PrintMessage("-\n")
-            compensation_angle -= angle_accuracy/4
+            compensation_angle = compensation_angle - search_dir * angle_accuracy/4
         elif (angle-desired_angle) < -angle_accuracy:
-            compensation_angle += angle_accuracy/4
+            compensation_angle = compensation_angle + search_dir * angle_accuracy/4
             App.Console.PrintMessage("+\n")
         elif angle_accuracy > angle_epsilon:
             App.Console.PrintMessage("0\n")
@@ -182,7 +174,7 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01):
         App.Console.PrintMessage(compensation_angle)
         App.Console.PrintMessage("\n")
 
-        Draft.makeWire([vc1, vc2])
+        #Draft.makeWire([vc1, vc2])
 
     App.Console.PrintMessage("compensation_angle:")
     App.Console.PrintMessage(compensation_angle)
@@ -409,17 +401,21 @@ if 1:
         App.Console.PrintMessage(i0)
         App.Console.PrintMessage("\n")
 
-        if i0.y > 0 and i0.z > 0:
+        if i0.y >= 0 and i0.z >= 0:
             desired_angle = 90-angle_to_center
+            angle_sign    = 1
+        elif i0.y < 0 and i0.z >= 0:
+            desired_angle = angle_to_center-90
+            angle_sign    = -1
         else:
             desired_angle = 0
 
 #        Draft.makeWire([i1, i0])
 #        Draft.makeWire([i1, i2])
 
-        compensation_angle = find_correct_angle(Base.Vector(0,0,1), led_location, desired_angle)
+        compensation_angle = find_correct_angle(Base.Vector(0,0,1), led_location, desired_angle, search_dir = angle_sign)
         #compensation_angle = find_correct_angle(Base.Vector(0,0,1), led_location, 0)
-        #compensation_angle = 0
+        #compensation_angle = -36
 
         rotate_z        = App.Rotation(Base.Vector(0,0,1), compensation_angle)
         rotate_final    = rotate_led.multiply(rotate_z)
