@@ -191,7 +191,59 @@ def create_tetra(verts):
     tetra = Part.makeSolid(shell)
 
     return tetra
-    #Part.show(tetra)
+
+def create_led_locations(triangle_verts, nr_leds_per_side):
+    #============================================================
+    # Create LED locations
+    #============================================================
+
+    # The angle between 2 triangle points in the plane created with the center
+    tetra_side_angle = triangle_verts[0].getAngle(triangle_verts[1])
+
+    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 1.5
+
+    rotate_inside_normal = triangle_verts[0].cross( triangle_verts[2].sub(triangle_verts[1]).multiply(0.5).add(triangle_verts[1]) )
+    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
+    inside_point0 = rotate_inside.multVec(triangle_verts[0])
+
+    rotate_inside_normal = triangle_verts[1].cross( triangle_verts[2].sub(triangle_verts[0]).multiply(0.5).add(triangle_verts[0]) )
+    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
+    inside_point1 = rotate_inside.multVec(triangle_verts[1])
+
+    rotate_inside_normal = triangle_verts[2].cross( triangle_verts[1].sub(triangle_verts[0]).multiply(0.5).add(triangle_verts[0]) )
+    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
+    inside_point2 = rotate_inside.multVec(triangle_verts[2])
+
+    outside_step_angle = inside_point0.getAngle(inside_point2) / (nr_leds_per_side-1)
+    rotate_side0     = inside_point0.cross(inside_point2)
+    rotate_side1     = inside_point1.cross(inside_point2)
+
+    led_locations = []
+
+    for line_nr in range(nr_leds_per_side):
+
+        leds_on_line = nr_leds_per_side - line_nr
+
+        start_point = App.Rotation(rotate_side0, math.degrees(outside_step_angle * line_nr)).multVec(inside_point0)
+        end_point   = App.Rotation(rotate_side1, math.degrees(outside_step_angle * line_nr)).multVec(inside_point1)
+
+        if leds_on_line == 1:
+            point = start_point
+            led_locations.append(point)
+            continue
+
+        step_angle    = start_point.getAngle(end_point) / (leds_on_line-1)
+        rotate_normal = start_point.cross(end_point)
+
+        for led_nr in range(leds_on_line):
+            point = App.Rotation(rotate_normal, math.degrees(step_angle * led_nr)).multVec(start_point)
+            led_locations.append(point)
+
+    for led_location in led_locations:
+        Draft.makeWire([center, led_location])
+        pass
+
+    return led_locations
 
 # All units are in mm
 triangle_side       = 90
@@ -252,57 +304,7 @@ if 1:
     Part.show(point1)
 
 
-if 1:
-    #============================================================
-    # Create LED locations
-    #============================================================
-
-    # The angle between 2 triangle points in the plane created with the center
-    tetra_side_angle = main_triangle_verts[0].getAngle(main_triangle_verts[1])
-    tetra_side_angle_deg = math.degrees(tetra_side_angle)
-
-    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 1.5
-
-    rotate_inside_normal = main_triangle_verts[0].cross( main_triangle_verts[2].sub(main_triangle_verts[1]).multiply(0.5).add(main_triangle_verts[1]) )
-    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
-    inside_point0 = rotate_inside.multVec(main_triangle_verts[0])
-
-    rotate_inside_normal = main_triangle_verts[1].cross( main_triangle_verts[2].sub(main_triangle_verts[0]).multiply(0.5).add(main_triangle_verts[0]) )
-    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
-    inside_point1 = rotate_inside.multVec(main_triangle_verts[1])
-
-    rotate_inside_normal = main_triangle_verts[2].cross( main_triangle_verts[1].sub(main_triangle_verts[0]).multiply(0.5).add(main_triangle_verts[0]) )
-    rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
-    inside_point2 = rotate_inside.multVec(main_triangle_verts[2])
-
-    outside_step_angle = inside_point0.getAngle(inside_point2) / (nr_leds_per_side-1)
-    rotate_side0     = inside_point0.cross(inside_point2)
-    rotate_side1     = inside_point1.cross(inside_point2)
-
-    led_locations = []
-
-    for line_nr in range(nr_leds_per_side):
-
-        leds_on_line = nr_leds_per_side - line_nr
-
-        start_point = App.Rotation(rotate_side0, math.degrees(outside_step_angle * line_nr)).multVec(inside_point0)
-        end_point   = App.Rotation(rotate_side1, math.degrees(outside_step_angle * line_nr)).multVec(inside_point1)
-
-        if leds_on_line == 1:
-            point = start_point
-            led_locations.append(point)
-            continue
-
-        step_angle    = start_point.getAngle(end_point) / (leds_on_line-1)
-        rotate_normal = start_point.cross(end_point)
-
-        for led_nr in range(leds_on_line):
-            point = App.Rotation(rotate_normal, math.degrees(step_angle * led_nr)).multVec(start_point)
-            led_locations.append(point)
-
-    for led_location in led_locations:
-        Draft.makeWire([center, led_location])
-        pass
+led_locations = create_led_locations(main_triangle_verts, nr_leds_per_side)
 
 if 1: 
     # Find intersection of LED ray with PCB plane
