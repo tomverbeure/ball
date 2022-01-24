@@ -298,11 +298,14 @@ penta_inner_angle   = math.radians(360 / 5)
 
 nr_leds_per_side    = 6
 
-led_max_radius      = 9.4/2
-led_conn_radius     = 3.9/2
-led_height          = 11
-led_conn_length     = 20
-led_stickout        = 2
+led_max_radius      = 9.4/2                 # Max radius of bulb at the bottom
+led_height          = 11                    # Height of the bulb
+led_conn_width      = 3.9                   # Joint width of the 4 LED connectors
+led_stickout        = 2                     # How high the LED sticks out from the sphere
+
+led_conn_length     = 25.4-1.6              # Minimum length of the LED connectors (See WS2812D-F8 datasheet)
+led_shaft_width     = led_conn_width + 1    # Width of the LED connector shaft
+led_shaft_height    = 2                     # Height of the LED connector shaft
 
 # Distance between the plane of the 3 main vertices and parallel plane towards the center
 # that will hold the PCB.
@@ -353,9 +356,9 @@ if 1:
     # Create LED holes
     led_holes = []
 
-    cyl_small   = Part.makeBox(1,3, led_conn_length)
-    cyl_small.Placement.Base = Base.Vector(-0.5, -1.5, 0)
-    #Part.show(cyl_small)
+    led_shaft   = Part.makeBox(led_shaft_height ,led_shaft_width, led_conn_length)
+    led_shaft.Placement.Base = Base.Vector(-led_shaft_height/2, -led_shaft_width/2, 0)
+    #Part.show(led_shaft)
 
     center_proj = center.sub(Base.Vector(main_triangle_normal).multiply(main_triangle_normal.dot(center.sub(main_triangle_verts[0]))))
     Draft.makeWire([center, center_proj])
@@ -380,11 +383,10 @@ if 1:
         led_holes.append(cyl_big)
 
         #
-        # LED leads hole
+        # LED shaft 
         #
 
-        #cyl_small   = Part.makeCylinder(led_conn_radius, led_conn_length)
-        cyl_small   = Part.makeBox(1,3, led_conn_length)
+        led_shaft   = Part.makeBox(led_shaft_height,led_shaft_width, led_conn_length)
 
         i0 = line_plane_intersection([center, led_location], main_triangle_verts)
         i1 = center_proj
@@ -420,18 +422,17 @@ if 1:
         rotate_z        = App.Rotation(Base.Vector(0,0,1), compensation_angle)
         rotate_final    = rotate_led.multiply(rotate_z)
 
-        #loc = Base.Vector(0,0,-(led_height-led_stickout)-led_conn_length)
-        loc = Base.Vector(-0.5,-1.5,-(led_height-led_stickout)-led_conn_length)
+        loc = Base.Vector(-led_shaft_height/2,-led_shaft_width/2,-(led_height-led_stickout)-led_conn_length)
         loc = rotate_final.multVec(loc)
 
 
-        cyl_small.Placement.Base     = led_location.add(loc)
-        cyl_small.Placement.Rotation = rotate_final
+        led_shaft.Placement.Base     = led_location.add(loc)
+        led_shaft.Placement.Rotation = rotate_final
 
-        led_holes.append(cyl_small)
+        led_holes.append(led_shaft)
 
-        #Part.show(cyl_big)
-        #Part.show(cyl_small)
+        Part.show(cyl_big)
+        Part.show(led_shaft)
 
 if 1:
     # Create sphere segment
