@@ -68,12 +68,13 @@ Possibilities:
 * [Freecad Topological data scripting](https://wiki.freecadweb.org/Topological_data_scripting)
 
 
-# FreeCAD gripes
+# FreeCAD comments
 
 * Base.Vector getAngle -> radians, all other functions -> degrees
 * Simply viewing actions, such as aligning view to face are not present out of the box
 * aligning a object along an axis is broken.
 * Location of buttons in the toolbar always changes
-* 
-
+* Add spheres for orientation
+* FreeCAD over OpenSCAD: interactivity
+* The number of LEDs must be chosen so that there's room in the center for a screw.
 

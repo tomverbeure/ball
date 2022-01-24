@@ -450,8 +450,7 @@ if 1:
     sphere = cut_plane(sphere, [center, main_triangle_verts[0], main_triangle_verts[2]])
     sphere = cut_plane(sphere, [center, main_triangle_verts[2], main_triangle_verts[1]])
     sphere = cut_plane(sphere, [center, main_triangle_verts[1], main_triangle_verts[0]])
-    #sphere = cut_plane(sphere, main_triangle_verts, invert = True, translate = -pcb_plane_offset)
-    sphere = cut_plane(sphere, main_triangle_verts, invert = True, translate = -10)
+    sphere = cut_plane(sphere, main_triangle_verts, invert = True, translate = -pcb_plane_offset)
     Part.show(sphere)
 
 
