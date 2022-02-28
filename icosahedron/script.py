@@ -1,11 +1,12 @@
 # import runpy
 # runpy.run_path(path_name='C:\\Users\\tom_v\\projects\\ball\\icosahedron\\script.py') 
+# runpy.run_path(path_name='C:\\Users\\tverbeure\\projects\\ball\\icosahedron\\script.py') 
 # runpy.run_path(path_name='/home/tom/projects/ball/icosahedron/script.py') 
+# runpy.run_path(path_name='/Users/tverbeure/projects/ball/icosahedron/script.py')
 
 import math
 import Part
 import Draft
-import App
 from FreeCAD import Base
 import FreeCADGui as Gui
 import FreeCAD as App
@@ -245,7 +246,7 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
     # The angle between 2 triangle points in the plane created with the center
     tetra_side_angle = triangle_verts[0].getAngle(triangle_verts[1])
 
-    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 1.5
+    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 1.3
 
     rotate_inside_normal = triangle_verts[0].cross( triangle_verts[2].sub(triangle_verts[1]).multiply(0.5).add(triangle_verts[1]) )
     rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
@@ -291,25 +292,25 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
     return led_locations
 
 # All units are in mm
-triangle_side       = 90
+triangle_side       = 76
 sphere_radius       = triangle_side / 4 * math.sqrt(10 + 2 * math.sqrt(5)) 
 penta_radius        = math.sqrt((2 * sphere_radius) ** 2 / 5)
 penta_inner_angle   = math.radians(360 / 5)
 
 nr_leds_per_side    = 6
 
-led_max_radius      = 9.4/2                 # Max radius of bulb at the bottom
+led_max_radius      = 10.4/2                # Max radius of bulb at the bottom
 led_height          = 11                    # Height of the bulb
 led_conn_width      = 3.9                   # Joint width of the 4 LED connectors
 led_stickout        = 2                     # How high the LED sticks out from the sphere
 
 led_conn_length     = 25.4-1.6              # Minimum length of the LED connectors (See WS2812D-F8 datasheet)
-led_shaft_width     = led_conn_width + 1    # Width of the LED connector shaft
-led_shaft_height    = 2                     # Height of the LED connector shaft
+led_shaft_width     = led_conn_width + 2    # Width of the LED connector shaft
+led_shaft_height    = 3                     # Height of the LED connector shaft
 
 # Distance between the plane of the 3 main vertices and parallel plane towards the center
 # that will hold the PCB.
-pcb_plane_offset    = 10
+pcb_plane_offset    = 6
 
 # screw inserts for M2 screws
 screw_insert_radius = 1.6
