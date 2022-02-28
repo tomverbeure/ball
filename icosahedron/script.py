@@ -311,10 +311,13 @@ led_shaft_height    = 3                     # Height of the LED connector shaft
 # Distance between the plane of the 3 main vertices and parallel plane towards the center
 # that will hold the PCB.
 pcb_plane_offset    = 6
+pcb_thickness       = 1.6
 
 # screw inserts for M2 screws
 screw_insert_radius = 1.6
 screw_insert_height = 3 
+
+screw_radius        = 1                     # M2 screw
 
 center              = Base.Vector(0,0,0)
 
@@ -346,11 +349,11 @@ if 1:
         point1.Placement.Base = pcb_triangle_verts[1];
         Part.show(point1)
 
-    pcb_led_intersection = []
+    pcb_led_intersections = []
 
     for led_location in led_locations:
         i = line_plane_intersection([led_location, center] , pcb_triangle_verts)
-        pcb_led_intersection.append(i)
+        pcb_led_intersections.append(i)
 
         if None:
             p = Part.makeSphere(1)
@@ -461,10 +464,10 @@ if 1:
 if 1: 
     # Cut screw insert holes
     insert_locations = []
-    insert_locations.append(Base.Vector(pcb_led_intersection[0].add(pcb_led_intersection[1]).add(pcb_led_intersection[nr_leds_per_side])).multiply(1/3))
-    insert_locations.append(Base.Vector(pcb_led_intersection[nr_leds_per_side-2].add(pcb_led_intersection[nr_leds_per_side-1]).add(pcb_led_intersection[2*nr_leds_per_side-2])).multiply(1/3))
+    insert_locations.append(Base.Vector(pcb_led_intersections[0].add(pcb_led_intersections[1]).add(pcb_led_intersections[nr_leds_per_side])).multiply(1/3))
+    insert_locations.append(Base.Vector(pcb_led_intersections[nr_leds_per_side-2].add(pcb_led_intersections[nr_leds_per_side-1]).add(pcb_led_intersections[2*nr_leds_per_side-2])).multiply(1/3))
     t = nr_leds_per_side * (nr_leds_per_side+1)//2
-    insert_locations.append(Base.Vector(pcb_led_intersection[t-3].add(pcb_led_intersection[t-2]).add(pcb_led_intersection[t-1])).multiply(1/3))
+    insert_locations.append(Base.Vector(pcb_led_intersections[t-3].add(pcb_led_intersections[t-2]).add(pcb_led_intersections[t-1])).multiply(1/3))
 
     for insert_loc in insert_locations:
         insert_cyl  = Part.makeCylinder(screw_insert_radius, screw_insert_height)
@@ -473,6 +476,48 @@ if 1:
         sphere = sphere.cut(insert_cyl)
 
     Part.show(sphere)
+
+if 1:
+    #============================================================   
+    # PCB
+    #============================================================   
+
+    # Make PCB bit smaller than maximum
+    scale_factor = (main_triangle_center.Length - pcb_plane_offset - pcb_thickness) / main_triangle_center.Length * 0.95
+
+    pcb_triangle_verts = [
+        Base.Vector(main_triangle_verts[0]).scale(1, scale_factor, scale_factor).sub(Base.Vector(-pcb_plane_offset-pcb_thickness)),
+        Base.Vector(main_triangle_verts[1]).scale(1, scale_factor, scale_factor).sub(Base.Vector(-pcb_plane_offset-pcb_thickness)),
+        Base.Vector(main_triangle_verts[2]).scale(1, scale_factor, scale_factor).sub(Base.Vector(-pcb_plane_offset-pcb_thickness)),
+    ]
+
+    pcb = Part.makePolygon( [ pcb_triangle_verts[0], pcb_triangle_verts[1], pcb_triangle_verts[2], pcb_triangle_verts[0] ] )
+    pcb = Part.Face(pcb)
+    pcb = pcb.extrude(Base.Vector(-pcb_thickness, 0,0))
+
+    # LED locations
+    for l in pcb_led_intersections:
+        cyl = Part.makeCylinder(led_conn_width/2, pcb_thickness)
+        cyl.Placement.Base = l
+        cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+        pcb = pcb.cut(cyl)
+
+    # Insert locations
+    for l in insert_locations:
+        cyl = Part.makeCylinder(screw_radius + 0.1, pcb_thickness)
+        cyl.Placement.Base = l
+        cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+        pcb = pcb.cut(cyl)
+
+    Part.show(pcb)
+
+#    l = pcb_triangle_verts[0].sub(Base.Vector(pcb_triangle_verts[0].x, 0, 0)).Length
+#    pcb_triangle = Draft.makePolygon(3, l)
+#    pcb_triangle.Placement.Base = Base.Vector(pcb_triangle_verts[0].x, 0, 0)
+#    pcb_triangle.Placement.Rotation = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0,0,1), Base.Vector(-1,0,0)))
+#    pcb_triangle = pcb_triangle.extrude(Base.Vector(1,0,0))
+#    Part.shot(pcb_triangle)
+
 
 App.ActiveDocument.recompute()
 Gui.activeDocument().activeView().viewRight()
