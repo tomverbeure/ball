@@ -1,4 +1,14 @@
 
+# FreeCAD to KiCAD PCB outline export
+
+    * Select face that you want as PCB outline
+    * Make sure face is aligned with the view
+    * With KiCAD StepUp plugin: project selected fact to 2D
+    * Convert 2D object to sketch
+    * Export sketch to PCB layer
+
+    * [Arranging PCB components in a circle with a script](http://kevincuzner.com/2017/04/28/arranging-components-in-a-circle-with-kicad/)
+
 # LED Sphere
 
 * Isosahedron: 20 triangular faces
