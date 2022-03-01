@@ -314,8 +314,9 @@ pcb_plane_offset    = 6
 pcb_thickness       = 1.6
 
 # screw inserts for M2 screws
-screw_insert_radius = 1.6
-screw_insert_height = 3 
+#screw_insert_radius = 1.6
+screw_insert_radius = 0.8
+screw_insert_height = 5 
 
 screw_radius        = 1                     # M2 screw
 
@@ -464,10 +465,15 @@ if 1:
 if 1: 
     # Cut screw insert holes
     insert_locations = []
+
+    # 3 screw inserts are located at the average location of 3 LED holes of each of the 3 corners
     insert_locations.append(Base.Vector(pcb_led_intersections[0].add(pcb_led_intersections[1]).add(pcb_led_intersections[nr_leds_per_side])).multiply(1/3))
     insert_locations.append(Base.Vector(pcb_led_intersections[nr_leds_per_side-2].add(pcb_led_intersections[nr_leds_per_side-1]).add(pcb_led_intersections[2*nr_leds_per_side-2])).multiply(1/3))
     t = nr_leds_per_side * (nr_leds_per_side+1)//2
     insert_locations.append(Base.Vector(pcb_led_intersections[t-3].add(pcb_led_intersections[t-2]).add(pcb_led_intersections[t-1])).multiply(1/3))
+
+    # There's also a screw insert right in the center, which is the center of the 3 exterior holes
+    insert_locations.append(Base.Vector(pcb_led_intersections[0].add(pcb_led_intersections[nr_leds_per_side-1]).add(pcb_led_intersections[t-1])).multiply(1/3))
 
     for insert_loc in insert_locations:
         insert_cyl  = Part.makeCylinder(screw_insert_radius, screw_insert_height)
