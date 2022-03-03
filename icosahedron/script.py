@@ -15,6 +15,41 @@ import PySide
 
 doc = App.newDocument()
 
+#============================================================
+# Adjustable parameters
+#============================================================
+
+# All units are in mm
+triangle_side       = 76
+sphere_radius       = triangle_side / 4 * math.sqrt(10 + 2 * math.sqrt(5)) 
+penta_radius        = math.sqrt((2 * sphere_radius) ** 2 / 5)
+penta_inner_angle   = math.radians(360 / 5)
+
+nr_leds_per_side    = 6
+
+led_max_radius      = 10.4/2                # Max radius of bulb at the bottom
+led_height          = 11                    # Height of the bulb
+led_conn_width      = 3.9                   # Joint width of the 4 LED connectors
+led_stickout        = 2                     # How high the LED sticks out from the sphere
+
+led_conn_length     = 25.4-1.6              # Minimum length of the LED connectors (See WS2812D-F8 datasheet)
+led_shaft_width     = led_conn_width + 2    # Width of the LED connector shaft
+led_shaft_height    = 3                     # Height of the LED connector shaft
+
+# Distance between the plane of the 3 main vertices and parallel plane towards the center
+# that will hold the PCB.
+pcb_plane_offset    = 6
+pcb_thickness       = 1.6
+
+# screw inserts for M2 screws
+#screw_insert_radius = 1.6
+screw_insert_radius = 0.8
+screw_insert_height = 5 
+
+screw_radius        = 1                     # M2 screw
+
+#============================================================
+
 def p2v(p):
 
     return Base.Vector(p.X, p.Y, p.Z)
@@ -292,34 +327,6 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
 
     return led_locations
 
-# All units are in mm
-triangle_side       = 76
-sphere_radius       = triangle_side / 4 * math.sqrt(10 + 2 * math.sqrt(5)) 
-penta_radius        = math.sqrt((2 * sphere_radius) ** 2 / 5)
-penta_inner_angle   = math.radians(360 / 5)
-
-nr_leds_per_side    = 6
-
-led_max_radius      = 10.4/2                # Max radius of bulb at the bottom
-led_height          = 11                    # Height of the bulb
-led_conn_width      = 3.9                   # Joint width of the 4 LED connectors
-led_stickout        = 2                     # How high the LED sticks out from the sphere
-
-led_conn_length     = 25.4-1.6              # Minimum length of the LED connectors (See WS2812D-F8 datasheet)
-led_shaft_width     = led_conn_width + 2    # Width of the LED connector shaft
-led_shaft_height    = 3                     # Height of the LED connector shaft
-
-# Distance between the plane of the 3 main vertices and parallel plane towards the center
-# that will hold the PCB.
-pcb_plane_offset    = 6
-pcb_thickness       = 1.6
-
-# screw inserts for M2 screws
-#screw_insert_radius = 1.6
-screw_insert_radius = 0.8
-screw_insert_height = 5 
-
-screw_radius        = 1                     # M2 screw
 
 center              = Base.Vector(0,0,0)
 
@@ -483,6 +490,7 @@ if 1:
         sphere = sphere.cut(insert_cyl)
 
     Part.show(sphere)
+
 
 if 1:
     #============================================================   
