@@ -3,6 +3,7 @@
 # runpy.run_path(path_name='C:\\Users\\tverbeure\\projects\\ball\\icosahedron\\script.py') 
 # runpy.run_path(path_name='/home/tom/projects/ball/icosahedron/script.py') 
 # runpy.run_path(path_name='/Users/tverbeure/projects/ball/icosahedron/script.py')
+# runpy.run_path(path_name='/Users/tom/projects/ball/icosahedron/script.py')
 
 import math
 import Part
@@ -231,7 +232,7 @@ def create_triangle_vertices(penta_radius):
     for vert in main_triangle_verts:
         new_verts.append(rotate_main_verts.multVec(vert))
 
-    # The triangle vertices now form a plan that is parallel to the YZ plane and perpendicular to the X axis.
+    # The triangle vertices now form a plane that is parallel to the YZ plane and perpendicular to the X axis.
     # This is just easier to deal with later...
     main_triangle_verts = new_verts
     main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
