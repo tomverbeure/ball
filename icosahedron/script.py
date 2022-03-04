@@ -48,7 +48,7 @@ screw_insert_height = 5
 
 screw_radius        = 1                     # M2 screw
 
-magnet_radius       = (5 +1 /2)             # + 1 for margin.
+magnet_radius       = (5 +1) / 2            # + 1 for margin.
 magnet_height       = 2 + 0.2
 
 #============================================================
