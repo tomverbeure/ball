@@ -505,12 +505,13 @@ if 1:
 
 if 1:
 
-    for side_nr in range(0, 3):
+    for side_nr in range(0, 1):
 
         s0 = side_nr % 3
         s1 = (side_nr+1) % 3
 
         # Place magnet holes in between the size LED holes
+
         rotate_side_normal = main_triangle_verts[s0].cross(main_triangle_verts[s1])
         tetra_side_angle = main_triangle_verts[s0].getAngle(main_triangle_verts[s1])
         boundary_angle = tetra_side_angle / nr_leds_per_side * 1.22
@@ -525,6 +526,37 @@ if 1:
             mag.Placement.Base = mag_center
             mag.Placement.Rotation = mag_axis_rotation
             sphere = sphere.cut(mag)
+
+        # Alignment features
+        box_size_x = 1
+        box_size_y = 2
+        box_size_z = 3
+
+        box_rotation    = mag_axis_rotation
+        box_radius_adj  = (main_triangle_verts[s0].Length - magnet_radius - 2) / main_triangle_verts[s0].Length
+
+        rotate_box      = App.Rotation(rotate_side_normal, math.degrees(tetra_side_angle/2))
+
+        box_offset = Base.Vector(-box_size_x/2, box_size_y/2, -box_size_z/2)
+        box_offset = Base.Vector(0,0,0)
+
+        box = Part.makeBox(box_size_x, box_size_y, box_size_z)
+        box_origin = Base.Vector(main_triangle_verts[s0]).multiply(mag_axis_radius_adj).add(box_offset)
+        box.Placement.Base  = box_origin
+        box.Placement.Rotation = box_rotation
+        Part.show(box)
+
+        box = Part.makeBox(box_size_x, box_size_y, box_size_z)
+        box_origin = rotate_box.multVec(Base.Vector(main_triangle_verts[s0]).multiply(mag_axis_radius_adj).add(box_offset))
+        
+        box.Placement.Base  = box_origin
+        box.Placement.Rotation = box_rotation
+        Part.show(box)
+
+        s = Part.makeSphere(0.2)
+        s.Placement.Base  = box_origin
+        Part.show(s)
+
 
     Part.show(sphere)
     pass
