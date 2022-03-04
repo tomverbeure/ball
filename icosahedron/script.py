@@ -48,6 +48,9 @@ screw_insert_height = 5
 
 screw_radius        = 1                     # M2 screw
 
+magnet_radius       = (5 +1 /2)             # + 1 for margin.
+magnet_height       = 2 + 0.2
+
 #============================================================
 
 def p2v(p):
@@ -282,8 +285,15 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
     # The angle between 2 triangle points in the plane created with the center
     tetra_side_angle = triangle_verts[0].getAngle(triangle_verts[1])
 
+    # 1.3 is a magic number. This number should be calculated because a different
+    # number is needed for different number of LEDs.
     boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 1.3
 
+    # Calculate the location of 3 LEDs in the corner.
+    # The corner LEDs are placed along the curve from a triangle corner to the middle 
+    # of the line between the 2 corners on the other side.
+
+    # t0 x ( 1/2 * (t2 - t1) ) + t1 )
     rotate_inside_normal = triangle_verts[0].cross( triangle_verts[2].sub(triangle_verts[1]).multiply(0.5).add(triangle_verts[1]) )
     rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
     inside_point0 = rotate_inside.multVec(triangle_verts[0])
@@ -296,6 +306,8 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
     rotate_inside   = App.Rotation(rotate_inside_normal, math.degrees(boundary_angle))
     inside_point2 = rotate_inside.multVec(triangle_verts[2])
 
+    # Calculate the rotation matrix to go from one LED location to the next, along 2
+    # axes.
     outside_step_angle = inside_point0.getAngle(inside_point2) / (nr_leds_per_side-1)
     rotate_side0     = inside_point0.cross(inside_point2)
     rotate_side1     = inside_point1.cross(inside_point2)
@@ -489,10 +501,33 @@ if 1:
         insert_cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(-1,0,0))
         sphere = sphere.cut(insert_cyl)
 
-    Part.show(sphere)
-
+    #Part.show(sphere)
 
 if 1:
+    # Place magnet holes in between the size LED holes
+
+    rotate_side_normal = main_triangle_verts[0].cross(main_triangle_verts[1])
+    tetra_side_angle = main_triangle_verts[0].getAngle(main_triangle_verts[1])
+    boundary_angle = tetra_side_angle / nr_leds_per_side * 1.22
+
+    mag_axis_rotation   = App.Rotation(Base.Vector(0,0,-1), rotate_side_normal)
+    mag_axis_radius_adj = (main_triangle_verts[0].Length - magnet_radius - 2) / main_triangle_verts[0].Length
+
+    for mag_nr in range(nr_leds_per_side-1):
+        rotate_side = App.Rotation(rotate_side_normal, math.degrees(boundary_angle + mag_nr * (tetra_side_angle - 2 * boundary_angle) / (nr_leds_per_side-2)))
+        mag_center = rotate_side.multVec(Base.Vector(main_triangle_verts[0]).multiply(mag_axis_radius_adj))
+        mag = Part.makeCylinder(3, 2)
+        mag.Placement.Base = mag_center
+        mag.Placement.Rotation = mag_axis_rotation
+        sphere = sphere.cut(mag)
+
+    Part.show(sphere)
+    pass
+    
+
+
+
+if 0:
     #============================================================   
     # PCB
     #============================================================   
