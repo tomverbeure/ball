@@ -504,22 +504,27 @@ if 1:
     #Part.show(sphere)
 
 if 1:
-    # Place magnet holes in between the size LED holes
 
-    rotate_side_normal = main_triangle_verts[0].cross(main_triangle_verts[1])
-    tetra_side_angle = main_triangle_verts[0].getAngle(main_triangle_verts[1])
-    boundary_angle = tetra_side_angle / nr_leds_per_side * 1.22
+    for side_nr in range(0, 3):
 
-    mag_axis_rotation   = App.Rotation(Base.Vector(0,0,-1), rotate_side_normal)
-    mag_axis_radius_adj = (main_triangle_verts[0].Length - magnet_radius - 2) / main_triangle_verts[0].Length
+        s0 = side_nr % 3
+        s1 = (side_nr+1) % 3
 
-    for mag_nr in range(nr_leds_per_side-1):
-        rotate_side = App.Rotation(rotate_side_normal, math.degrees(boundary_angle + mag_nr * (tetra_side_angle - 2 * boundary_angle) / (nr_leds_per_side-2)))
-        mag_center = rotate_side.multVec(Base.Vector(main_triangle_verts[0]).multiply(mag_axis_radius_adj))
-        mag = Part.makeCylinder(3, 2)
-        mag.Placement.Base = mag_center
-        mag.Placement.Rotation = mag_axis_rotation
-        sphere = sphere.cut(mag)
+        # Place magnet holes in between the size LED holes
+        rotate_side_normal = main_triangle_verts[s0].cross(main_triangle_verts[s1])
+        tetra_side_angle = main_triangle_verts[s0].getAngle(main_triangle_verts[s1])
+        boundary_angle = tetra_side_angle / nr_leds_per_side * 1.22
+    
+        mag_axis_rotation   = App.Rotation(Base.Vector(0,0,-1), rotate_side_normal)
+        mag_axis_radius_adj = (main_triangle_verts[s0].Length - magnet_radius - 2) / main_triangle_verts[s0].Length
+    
+        for mag_nr in range(nr_leds_per_side-1):
+            rotate_side = App.Rotation(rotate_side_normal, math.degrees(boundary_angle + mag_nr * (tetra_side_angle - 2 * boundary_angle) / (nr_leds_per_side-2)))
+            mag_center = rotate_side.multVec(Base.Vector(main_triangle_verts[s0]).multiply(mag_axis_radius_adj))
+            mag = Part.makeCylinder(3, 2)
+            mag.Placement.Base = mag_center
+            mag.Placement.Rotation = mag_axis_rotation
+            sphere = sphere.cut(mag)
 
     Part.show(sphere)
     pass
