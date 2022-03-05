@@ -9,6 +9,12 @@
 
     * [Arranging PCB components in a circle with a script](http://kevincuzner.com/2017/04/28/arranging-components-in-a-circle-with-kicad/)
 
+* Postprocessing
+
+    * Chamfer alignment stickouts at the bottom (0.8mm)
+    * Chamfer bottom of the triangle (1mm)
+    * Fillet the 3 corners of the triangle (1mm)
+
 # LED Sphere
 
 * Isosahedron: 20 triangular faces
