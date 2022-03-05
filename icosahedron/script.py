@@ -33,8 +33,8 @@ led_conn_width      = 3.9                   # Joint width of the 4 LED connector
 led_stickout        = 2                     # How high the LED sticks out from the sphere
 
 led_conn_length     = 25.4-1.6              # Minimum length of the LED connectors (See WS2812D-F8 datasheet)
-led_shaft_width     = led_conn_width + 2    # Width of the LED connector shaft
-led_shaft_height    = 3                     # Height of the LED connector shaft
+led_shaft_width     = led_conn_width + 1.5  # Width of the LED connector shaft
+led_shaft_height    = 2.5                   # Height of the LED connector shaft
 
 # Distance between the plane of the 3 main vertices and parallel plane towards the center
 # that will hold the PCB.
@@ -43,10 +43,14 @@ pcb_thickness       = 1.6
 
 # screw inserts for M2 screws
 #screw_insert_radius = 1.6
-screw_insert_radius = 0.8
-screw_insert_height = 5 
+#screw_insert_radius = 0.8
+#screw_insert_height = 5 
 
-screw_radius        = 1                     # M2 screw
+# Dimensions for a magnet with radius 4 and depth 4
+screw_insert_radius = (4 + 1)/2
+screw_insert_height = 4 
+
+screw_radius        = 6/2                     # M2 screw
 
 magnet_radius           = (5 +1) / 2            # + 1 for margin.
 magnet_height           = 2 + 0.2
@@ -397,6 +401,8 @@ if 1:
     center_proj = center.sub(Base.Vector(main_triangle_normal).multiply(main_triangle_normal.dot(center.sub(main_triangle_verts[0]))))
     Draft.makeWire([center, center_proj])
 
+    compensation_angles = []
+
     for led_location in led_locations:
     #led_location = led_locations[14]
     #if True:
@@ -452,6 +458,7 @@ if 1:
         #Draft.makeWire([i1, i2])
 
         compensation_angle = find_correct_angle(Base.Vector(0,0,1), led_location, desired_angle, search_dir = angle_sign)
+        compensation_angles.append(compensation_angle)
 
         rotate_z        = App.Rotation(Base.Vector(0,0,1), compensation_angle)
         rotate_final    = rotate_led.multiply(rotate_z)
@@ -491,11 +498,24 @@ if 1:
     # Cut screw insert holes
     insert_locations = []
 
-    # 3 screw inserts are located at the average location of 3 LED holes of each of the 3 corners
-    insert_locations.append(Base.Vector(pcb_led_intersections[0].add(pcb_led_intersections[1]).add(pcb_led_intersections[nr_leds_per_side])).multiply(1/3))
-    insert_locations.append(Base.Vector(pcb_led_intersections[nr_leds_per_side-2].add(pcb_led_intersections[nr_leds_per_side-1]).add(pcb_led_intersections[2*nr_leds_per_side-2])).multiply(1/3))
+    # 3 screw inserts are located in between the location of 3 LED holes of each of the 3 corners
+    # Use a weighed average to shift the hole a bit outward.
+    insert_locations.append(Base.Vector(pcb_led_intersections[0]).multiply(7).   \
+                                add(Base.Vector(pcb_led_intersections[1]).multiply(4)). \
+                                add(Base.Vector(pcb_led_intersections[nr_leds_per_side]).multiply(4)). \
+                                multiply(1/15))
+
+    insert_locations.append(Base.Vector(pcb_led_intersections[nr_leds_per_side-2]).multiply(4).   \
+                                add(Base.Vector(pcb_led_intersections[nr_leds_per_side-1]).multiply(7)). \
+                                add(Base.Vector(pcb_led_intersections[2*nr_leds_per_side-2]).multiply(4)). \
+                                multiply(1/15))
+
     t = nr_leds_per_side * (nr_leds_per_side+1)//2
-    insert_locations.append(Base.Vector(pcb_led_intersections[t-3].add(pcb_led_intersections[t-2]).add(pcb_led_intersections[t-1])).multiply(1/3))
+
+    insert_locations.append(Base.Vector(pcb_led_intersections[t-3]).multiply(4).   \
+                                add(Base.Vector(pcb_led_intersections[t-2]).multiply(4)). \
+                                add(Base.Vector(pcb_led_intersections[t-1]).multiply(7)). \
+                                multiply(1/15))
 
     # There's also a screw insert right in the center, which is the center of the 3 exterior holes
     insert_locations.append(Base.Vector(pcb_led_intersections[0].add(pcb_led_intersections[nr_leds_per_side-1]).add(pcb_led_intersections[t-1])).multiply(1/3))
@@ -616,22 +636,17 @@ if 1:
             box.Placement.Base      = r.multVec(box.Placement.Base)
             box.Placement.Rotation  = r.multiply(box.Placement.Rotation)
 
-        #s = Part.makeSphere(0.2)
-        #s.Placement.Base  = box_origin
-        #Part.show(s)
-        #sphere = sphere.fuse(s)
-
     Part.show(sphere)
     pass
 
 
-if 0:
+if 1:
     #============================================================   
     # PCB
     #============================================================   
 
     # Make PCB bit smaller than maximum
-    scale_factor = (main_triangle_center.Length - pcb_plane_offset - pcb_thickness) / main_triangle_center.Length * 0.95
+    scale_factor = (main_triangle_center.Length - pcb_plane_offset - pcb_thickness) / main_triangle_center.Length * 0.90
 
     pcb_triangle_verts = [
         Base.Vector(main_triangle_verts[0]).scale(1, scale_factor, scale_factor).sub(Base.Vector(-pcb_plane_offset-pcb_thickness)),
@@ -644,11 +659,16 @@ if 0:
     pcb = pcb.extrude(Base.Vector(-pcb_thickness, 0,0))
 
     # LED locations
-    for l in pcb_led_intersections:
+    for idx, l in enumerate(pcb_led_intersections):
         cyl = Part.makeCylinder(led_conn_width/2, pcb_thickness)
         cyl.Placement.Base = l
         cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
         pcb = pcb.cut(cyl)
+
+        #b = Part.makeBox(2,4,0.2)
+        #b.Placement.Base = Base.Vector(l).add(Base.Vector(-1/2,-2/2,-3/2))
+        #b.Placement.Rotation = App.Rotation(Base.Vector(1,0,0), compensation_angles[idx])
+        #Part.show(b)
 
     # Insert locations
     for l in insert_locations:
