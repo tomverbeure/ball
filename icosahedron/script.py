@@ -52,6 +52,10 @@ magnet_radius           = (5 +1) / 2            # + 1 for margin.
 magnet_height           = 2 + 0.2
 magnet_dist_from_shell  = 1
 
+align_box_size_x        = 3.5
+align_box_size_y        = 8
+align_box_size_z        = 1
+
 #============================================================
 
 def p2v(p):
@@ -505,111 +509,120 @@ if 1:
     #Part.show(sphere)
 
 if 1:
+    #============================================================
+    # Magnet holes and alignment features
+    #============================================================
 
-    for side_nr in range(1, 2):
+    # In what follows, we create magents and alignment boxes on one side, apply them, and
+    # then immediately rotate the part around 2 times so that is also applied to the 
+    # other 2 sides.
 
-        s0 = side_nr % 3
-        s1 = (side_nr+1) % 3
+    s0 = 0
+    s1 = 1
 
-        #============================================================
-        # Place magnet holes in between the size LED holes
-        #============================================================
+    #============================================================
+    # Place magnet holes in between the size LED holes
+    #============================================================
 
-        rotate_side_normal = main_triangle_verts[s0].cross(main_triangle_verts[s1])
-        tetra_side_angle = main_triangle_verts[s0].getAngle(main_triangle_verts[s1])
-        boundary_angle = tetra_side_angle / nr_leds_per_side * 1.22
-    
-        mag_axis_rotation   = App.Rotation(Base.Vector(0,0,-1), rotate_side_normal)
-        mag_axis_radius_adj = (main_triangle_verts[s0].Length - magnet_radius - magnet_dist_from_shell) / main_triangle_verts[s0].Length
-    
-        for mag_nr in range(nr_leds_per_side-1):
-            rotate_side = App.Rotation(rotate_side_normal, math.degrees(boundary_angle + mag_nr * (tetra_side_angle - 2 * boundary_angle) / (nr_leds_per_side-2)))
-            mag_center = rotate_side.multVec(Base.Vector(main_triangle_verts[s0]).multiply(mag_axis_radius_adj))
-            mag = Part.makeCylinder(3, 2)
-            mag.Placement.Base = mag_center
-            mag.Placement.Rotation = mag_axis_rotation
+    rotate_side_normal = main_triangle_verts[s0].cross(main_triangle_verts[s1])
+    tetra_side_angle = main_triangle_verts[s0].getAngle(main_triangle_verts[s1])
+    boundary_angle = tetra_side_angle / nr_leds_per_side * 1.22
+
+    mag_axis_rotation   = App.Rotation(Base.Vector(0,0,-1), rotate_side_normal)
+    mag_axis_radius_adj = (main_triangle_verts[s0].Length - magnet_radius - magnet_dist_from_shell) / main_triangle_verts[s0].Length
+
+    for mag_nr in range(nr_leds_per_side-1):
+        rotate_side = App.Rotation(rotate_side_normal, math.degrees(boundary_angle + mag_nr * (tetra_side_angle - 2 * boundary_angle) / (nr_leds_per_side-2)))
+        mag_center = rotate_side.multVec(Base.Vector(main_triangle_verts[s0]).multiply(mag_axis_radius_adj))
+        mag = Part.makeCylinder(magnet_radius, magnet_height)
+        mag.Placement.Base = mag_center
+        mag.Placement.Rotation = mag_axis_rotation
+
+        r = App.Rotation(main_triangle_normal, 360/3)
+        for i in range(0,3):
             sphere = sphere.cut(mag)
+            mag.Placement.Base      = r.multVec(mag.Placement.Base)
+            mag.Placement.Rotation  = r.multiply(mag.Placement.Rotation)
 
-        #============================================================
-        # Place alignment features
-        #============================================================
+    #============================================================
+    # Place alignment features
+    #============================================================
 
-        box_rotation    = mag_axis_rotation
-        box_radius_adj  = (main_triangle_verts[s0].Length - magnet_radius - magnet_dist_from_shell) / main_triangle_verts[s0].Length
+    # We don't do any chamfering. That needs to be done in postprocessing.
 
-        # This rotates something on the ray from the center to the corner to the middle.
-        rotate_to_middle = App.Rotation(rotate_side_normal, math.degrees(tetra_side_angle/2))
+    box_rotation    = mag_axis_rotation
+    box_radius_adj  = (main_triangle_verts[s0].Length - magnet_radius - magnet_dist_from_shell) / main_triangle_verts[s0].Length
 
-        # I lost track of the different rotation, so I just create a new x/y/z coordinate
-        # system that has X going from center to the center magnet, Y from one triangle corner to the next,
-        # and Z orthogonal to that.
-        x_axis          = rotate_to_middle.multVec(Base.Vector(main_triangle_verts[s0])).normalize()
-        y_axis          = Base.Vector(main_triangle_verts[s0]).sub(main_triangle_verts[s1]).normalize()
-        z_axis          = x_axis.cross(y_axis).normalize()
+    # This rotates something on the ray from the center to the corner to the middle.
+    rotate_to_middle = App.Rotation(rotate_side_normal, math.degrees(tetra_side_angle/2))
 
-        box_size_x = 3.5
-        box_size_y = 8
-        box_size_z = 1
+    # I lost track of the different rotation, so I just create a new x/y/z coordinate
+    # system that has X going from center to the center magnet, Y from one triangle corner to the next,
+    # and Z orthogonal to that.
+    x_axis          = rotate_to_middle.multVec(Base.Vector(main_triangle_verts[s0])).normalize()
+    y_axis          = Base.Vector(main_triangle_verts[s0]).sub(main_triangle_verts[s1]).normalize()
+    z_axis          = x_axis.cross(y_axis).normalize()
 
-        box_sizes       = []
-        box_placements  = []
-        box_ops         = []
+    box_sizes       = []
+    box_placements  = []
+    box_ops         = []
 
-        box_sizes.append( Base.Vector(box_size_x, box_size_y, box_size_z))
-        #box_placements.append(Base.Vector(-box_size_x/2 - magnet_radius - 1, box_size_y/2, box_size_z/2))
-        box_placements.append(Base.Vector(0,0,0))
-        box_ops.append(-1)
+    box_sizes.append( Base.Vector(align_box_size_x, align_box_size_y, align_box_size_z))
+    box_placements.append(Base.Vector(-align_box_size_x/2 - magnet_radius - 1, align_box_size_y/2, align_box_size_z/2))
+    box_ops.append(-1)
 
-        # Cutouts
-#        box_sizes.append( Base.Vector(box_size_x, box_size_y, box_size_z))
-#        box_placements.append(Base.Vector(-box_size_x/2 - magnet_radius - 1, box_size_y/2, box_size_z/2))
-#        box_ops.append(-1)
-#
-#        box_sizes.append( Base.Vector(box_size_x, box_size_y, box_size_z))
-#        box_placements.append(Base.Vector(-3*box_size_x/2 - magnet_radius - 1, -box_size_y/2, box_size_z/2))
-#        box_ops.append(-1)
-#
-#        # Extends
-#        box_sizes.append( Base.Vector(box_size_x-0.8, box_size_y-0.8, box_size_z))
-#        box_placements.append(Base.Vector(-box_size_x/2 - magnet_radius - 1, -box_size_y/2, -box_size_z/2))
-#        box_ops.append(1)
-#
-#        box_sizes.append( Base.Vector(box_size_x-0.8, box_size_y-0.8, box_size_z))
-#        box_placements.append(Base.Vector(-3*box_size_x/2 - magnet_radius - 1, box_size_y/2, -box_size_z/2))
-#        box_ops.append(1)
+    # Cutouts
+    box_sizes.append( Base.Vector(align_box_size_x, align_box_size_y, align_box_size_z))
+    box_placements.append(Base.Vector(-align_box_size_x/2 - magnet_radius - 1, align_box_size_y/2, align_box_size_z/2))
+    box_ops.append(-1)
 
-        for b in range(len(box_sizes)):
-            box_size = box_sizes[b]
-            box_placement = box_placements[b]
+    box_sizes.append( Base.Vector(align_box_size_x, align_box_size_y, align_box_size_z))
+    box_placements.append(Base.Vector(-3*align_box_size_x/2 - magnet_radius - 1, -align_box_size_y/2, align_box_size_z/2))
+    box_ops.append(-1)
 
-            box_offset = Base.Vector(-box_size.x/2, -box_size.y/2, -box_size.z/2).add(box_placement)
-    
-            box_offset = Base.Vector(x_axis).multiply(box_offset.x). \
-                            add(Base.Vector(y_axis).multiply(box_offset.y)). \
-                            add(Base.Vector(z_axis).multiply(box_offset.z))
-    
-            # Create a box. Rotate it to the center magnet. Adjust the location from there.
-            box = Part.makeBox(box_size.x, box_size.y, box_size.z)
-            box_origin = rotate_to_middle.multVec(Base.Vector(main_triangle_verts[s0]).multiply(mag_axis_radius_adj)).add(box_offset)
-            
-            box.Placement.Base  = box_origin
-            box.Placement.Rotation = box_rotation
-            #Part.show(box)
+    # Extends
+    box_sizes.append( Base.Vector(align_box_size_x-0.8, align_box_size_y-0.8, align_box_size_z))
+    box_placements.append(Base.Vector(-align_box_size_x/2 - magnet_radius - 1, -align_box_size_y/2, -align_box_size_z/2))
+    box_ops.append(1)
+
+    box_sizes.append( Base.Vector(align_box_size_x-0.8, align_box_size_y-0.8, align_box_size_z))
+    box_placements.append(Base.Vector(-3*align_box_size_x/2 - magnet_radius - 1, align_box_size_y/2, -align_box_size_z/2))
+    box_ops.append(1)
+
+    for b in range(len(box_sizes)):
+        box_size = box_sizes[b]
+        box_placement = box_placements[b]
+
+        box_offset = Base.Vector(-box_size.x/2, -box_size.y/2, -box_size.z/2).add(box_placement)
+
+        box_offset = Base.Vector(x_axis).multiply(box_offset.x). \
+                        add(Base.Vector(y_axis).multiply(box_offset.y)). \
+                        add(Base.Vector(z_axis).multiply(box_offset.z))
+
+        # Create a box. Rotate it to the center magnet. Adjust the location from there.
+        box = Part.makeBox(box_size.x, box_size.y, box_size.z)
+        box_origin = rotate_to_middle.multVec(Base.Vector(main_triangle_verts[s0]).multiply(mag_axis_radius_adj)).add(box_offset)
+        
+        box.Placement.Base  = box_origin
+        box.Placement.Rotation = box_rotation
+        #Part.show(box)
+
+        r = App.Rotation(main_triangle_normal, 360/3)
+        for i in range(0,3):
             if box_ops[b] == -1:
                 sphere = sphere.cut(box)
             else:
                 sphere = sphere.fuse(box)
-    
-            #s = Part.makeSphere(0.2)
-            #s.Placement.Base  = box_origin
-            #Part.show(s)
-            #sphere = sphere.fuse(s)
+            box.Placement.Base      = r.multVec(box.Placement.Base)
+            box.Placement.Rotation  = r.multiply(box.Placement.Rotation)
 
+        #s = Part.makeSphere(0.2)
+        #s.Placement.Base  = box_origin
+        #Part.show(s)
+        #sphere = sphere.fuse(s)
 
     Part.show(sphere)
     pass
-    
-
 
 
 if 0:
