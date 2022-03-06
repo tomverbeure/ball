@@ -349,9 +349,10 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
             point = App.Rotation(rotate_normal, math.degrees(step_angle * led_nr)).multVec(start_point)
             led_locations.append(point)
 
-    for led_location in led_locations:
-        Draft.makeWire([center, led_location])
-        pass
+    if 0:
+        for led_location in led_locations:
+            Draft.makeWire([center, led_location])
+            pass
 
     return led_locations
 
@@ -691,14 +692,33 @@ if 1:
                                 add(Base.Vector(pcb_led_intersections[nr_leds_per_side + nr_leds_per_side//2 -1]).multiply(5)). \
                                 multiply(1/11)
 
+    # Create elongated gap with rounded ends
     gap = Part.makeBox(pcb_thickness, pcb_gap_length, pcb_gap_width)
-    gap.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, -pcb_gap_length/2, -pcb_gap_width/2))
+    gap.Placement.Base     = Base.Vector(0, -pcb_gap_length/2, -pcb_gap_width/2)
     cyl = Part.makeCylinder(pcb_gap_width/2, pcb_thickness)
-    cyl.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, -pcb_gap_length/2, 0))
+    cyl.Placement.Base     = Base.Vector(0, -pcb_gap_length/2, 0)
     cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
     gap = gap.fuse(cyl)
-    cyl.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, pcb_gap_length/2, 0))
+    cyl.Placement.Base     = Base.Vector(0, pcb_gap_length/2, 0)
     gap = gap.fuse(cyl)
+
+    gap.Placement.Base     = Base.Vector(inner_support_loc)
+
+    # Create supports for inner piece that fits in the gap
+
+    # Gap between PCB gap and inner support
+    margin = 1
+
+    inner_support = Part.makeBox(2 * pcb_thickness, pcb_gap_length-margin, pcb_gap_width-margin)
+    inner_support.Placement.Base     = Base.Vector(0, -(pcb_gap_length-margin)/2, -(pcb_gap_width-margin)/2)
+    cyl = Part.makeCylinder((pcb_gap_width-margin)/2, 2 * pcb_thickness)
+    cyl.Placement.Base     = Base.Vector(0, -(pcb_gap_length-margin)/2, 0)
+    cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+    inner_support = inner_support.fuse(cyl)
+    cyl.Placement.Base     = Base.Vector(0, (pcb_gap_length-margin)/2, 0)
+    inner_support = inner_support.fuse(cyl)
+
+    inner_support.Placement.Base     = Base.Vector(inner_support_loc)
 
     r = App.Rotation(main_triangle_normal, 360/3)
     for i in range(0,3):
@@ -714,18 +734,36 @@ if 1:
     # Inner piece
     #============================================================   
 
+    points = [
+            Base.Vector(insert_locations[0]).add(Base.Vector(2*pcb_thickness,0,0)),  
+            Base.Vector(insert_locations[1]).add(Base.Vector(2*pcb_thickness,0,0)),  
+            Base.Vector(insert_locations[2]).add(Base.Vector(2*pcb_thickness,0,0)),  
+            Base.Vector(insert_locations[0]).add(Base.Vector(2*pcb_thickness,0,0)),  
+            ]
+
+    poly = Part.makePolygon(points)
+    face = Part.Face(poly)
+    inner = face.extrude(Base.Vector(4, 0, 0))
+
     inner_feet = []
-    for l in insert_locations:
+    for idx, l in enumerate(insert_locations):
         inner_foot = Part.makeCylinder(inner_foot_radius, screw_insert_height+3)
         inner_foot.Placement.Base = Base.Vector(l)
         inner_foot.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+        inner = inner.fuse(inner_foot)
 
         cyl  = Part.makeCylinder(screw_insert_radius, screw_insert_height)
         cyl.Placement.Base = Base.Vector(l)
         cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
-        inner_foot = inner_foot.cut(cyl)
+        inner = inner.cut(cyl)
 
-        Part.show(inner_foot)
+    r = App.Rotation(main_triangle_normal, 360/3)
+    for i in range(0,3):
+        inner = inner.fuse(inner_support)
+        inner_support.Placement.Base      = r.multVec(inner_support.Placement.Base)
+        inner_support.Placement.Rotation  = r.multiply(inner_support.Placement.Rotation)
+
+    Part.show(inner)
 
 
 App.ActiveDocument.recompute()
