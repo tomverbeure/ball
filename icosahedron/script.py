@@ -36,6 +36,11 @@ led_conn_length     = 25.4-1.6              # Minimum length of the LED connecto
 led_shaft_width     = led_conn_width + 1.5  # Width of the LED connector shaft
 led_shaft_height    = 2.5                   # Height of the LED connector shaft
 
+# Alignment boxes on the side
+align_box_size_x        = 3.5
+align_box_size_y        = 8
+align_box_size_z        = 1
+
 # Distance between the plane of the 3 main vertices and parallel plane towards the center
 # that will hold the PCB.
 pcb_plane_offset    = 6
@@ -57,9 +62,8 @@ magnet_radius           = (5 +1) / 2            # + 1 for margin.
 magnet_height           = 2 + 0.2
 magnet_dist_from_shell  = 1
 
-align_box_size_x        = 3.5
-align_box_size_y        = 8
-align_box_size_z        = 1
+pcb_gap_length      = 22 
+pcb_gap_width       = 3.5 
 
 inner_foot_radius       = pcb_hole_radius - 0.4
 
@@ -687,20 +691,20 @@ if 1:
                                 add(Base.Vector(pcb_led_intersections[nr_leds_per_side + nr_leds_per_side//2 -1]).multiply(5)). \
                                 multiply(1/11)
 
-    hole = Part.makeBox(pcb_thickness, 22, 3.5)
-    hole.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, -22/2, -3.5/2))
-    cyl = Part.makeCylinder(3.5/2, pcb_thickness)
-    cyl.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, -22/2, 0))
+    gap = Part.makeBox(pcb_thickness, pcb_gap_length, pcb_gap_width)
+    gap.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, -pcb_gap_length/2, -pcb_gap_width/2))
+    cyl = Part.makeCylinder(pcb_gap_width/2, pcb_thickness)
+    cyl.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, -pcb_gap_length/2, 0))
     cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
-    hole = hole.fuse(cyl)
-    cyl.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, 22/2, 0))
-    hole = hole.fuse(cyl)
+    gap = gap.fuse(cyl)
+    cyl.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, pcb_gap_length/2, 0))
+    gap = gap.fuse(cyl)
 
     r = App.Rotation(main_triangle_normal, 360/3)
     for i in range(0,3):
-        pcb = pcb.cut(hole)
-        hole.Placement.Base      = r.multVec(hole.Placement.Base)
-        hole.Placement.Rotation  = r.multiply(hole.Placement.Rotation)
+        pcb = pcb.cut(gap)
+        gap.Placement.Base      = r.multVec(gap.Placement.Base)
+        gap.Placement.Rotation  = r.multiply(gap.Placement.Rotation)
 
     Part.show(pcb)
 
