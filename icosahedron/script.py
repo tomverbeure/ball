@@ -50,8 +50,9 @@ pcb_thickness       = 1.6
 screw_insert_radius = (4 + 1)/2
 screw_insert_height = 4 
 
-screw_radius        = 6/2                     # M2 screw
+pcb_hole_radius     = 8/2                     # M2 screw
 
+# These are the side magnets that keep triangles together.
 magnet_radius           = (5 +1) / 2            # + 1 for margin.
 magnet_height           = 2 + 0.2
 magnet_dist_from_shell  = 1
@@ -59,6 +60,8 @@ magnet_dist_from_shell  = 1
 align_box_size_x        = 3.5
 align_box_size_y        = 8
 align_box_size_z        = 1
+
+inner_foot_radius       = pcb_hole_radius - 0.4
 
 #============================================================
 
@@ -670,21 +673,55 @@ if 1:
         #b.Placement.Rotation = App.Rotation(Base.Vector(1,0,0), compensation_angles[idx])
         #Part.show(b)
 
-    # Insert locations
+    # Insert holes in the PCB for the inner piece feet.
     for l in insert_locations:
-        cyl = Part.makeCylinder(screw_radius + 0.1, pcb_thickness)
+        cyl = Part.makeCylinder(pcb_hole_radius, pcb_thickness)
         cyl.Placement.Base = l
         cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
         pcb = pcb.cut(cyl)
 
+
+    # Holes for more inner piece supports
+    inner_support_loc = Base.Vector(pcb_led_intersections[nr_leds_per_side//2 -1]).multiply(3).   \
+                                add(Base.Vector(pcb_led_intersections[nr_leds_per_side//2]).multiply(3)). \
+                                add(Base.Vector(pcb_led_intersections[nr_leds_per_side + nr_leds_per_side//2 -1]).multiply(5)). \
+                                multiply(1/11)
+
+    hole = Part.makeBox(pcb_thickness, 22, 3.5)
+    hole.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, -22/2, -3.5/2))
+    cyl = Part.makeCylinder(3.5/2, pcb_thickness)
+    cyl.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, -22/2, 0))
+    cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+    hole = hole.fuse(cyl)
+    cyl.Placement.Base     = Base.Vector(inner_support_loc).add(Base.Vector(0, 22/2, 0))
+    hole = hole.fuse(cyl)
+
+    r = App.Rotation(main_triangle_normal, 360/3)
+    for i in range(0,3):
+        pcb = pcb.cut(hole)
+        hole.Placement.Base      = r.multVec(hole.Placement.Base)
+        hole.Placement.Rotation  = r.multiply(hole.Placement.Rotation)
+
     Part.show(pcb)
 
-#    l = pcb_triangle_verts[0].sub(Base.Vector(pcb_triangle_verts[0].x, 0, 0)).Length
-#    pcb_triangle = Draft.makePolygon(3, l)
-#    pcb_triangle.Placement.Base = Base.Vector(pcb_triangle_verts[0].x, 0, 0)
-#    pcb_triangle.Placement.Rotation = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0,0,1), Base.Vector(-1,0,0)))
-#    pcb_triangle = pcb_triangle.extrude(Base.Vector(1,0,0))
-#    Part.shot(pcb_triangle)
+
+if 1:
+    #============================================================   
+    # Inner piece
+    #============================================================   
+
+    inner_feet = []
+    for l in insert_locations:
+        inner_foot = Part.makeCylinder(inner_foot_radius, screw_insert_height+3)
+        inner_foot.Placement.Base = Base.Vector(l)
+        inner_foot.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+
+        cyl  = Part.makeCylinder(screw_insert_radius, screw_insert_height)
+        cyl.Placement.Base = Base.Vector(l)
+        cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+        inner_foot = inner_foot.cut(cyl)
+
+        Part.show(inner_foot)
 
 
 App.ActiveDocument.recompute()
