@@ -36,6 +36,8 @@ Possibilities:
 
 * 20 faces printed.
 
+	* 2-sided triangle: 3  LEDs -> 60 LEDs
+	* 3-sided triangle: 6  LEDs -> 120 LEDs
 	* 4-sided triangle: 10 LEDs -> 200 LEDs
 	* 5-sided triangle: 15 LEDs -> 300 
 	* 6-sided triangle: 21 LEDs -> 420
