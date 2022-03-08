@@ -279,7 +279,8 @@ def create_triangle_vertices(penta_radius):
 
     # Orthogonal projects of center onto the triangle plane, then rotate this center to coincide with the X axis.
     center_proj = center.sub(Base.Vector(main_triangle_normal).multiply(main_triangle_normal.dot(center.sub(main_triangle_verts[0]))))
-    rotate_main_verts = App.Rotation(center_proj, Base.Vector(-1, 0, 0))
+    rotate_main_verts     = App.Rotation(center_proj, Base.Vector(-1, 0, 0))
+    rev_rotate_main_verts = App.Rotation(Base.Vector(-1, 0, 0), center_proj)
 
     # Rotate the triangle vertices just the same.
     new_verts = []
@@ -291,7 +292,7 @@ def create_triangle_vertices(penta_radius):
     main_triangle_verts = new_verts
     main_triangle_normal = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
 
-    return main_triangle_verts
+    return [ main_triangle_verts, main_triangle_normal, rotate_main_verts, rev_rotate_main_verts ]
 
 def create_led_locations(triangle_verts, nr_leds_per_side):
     #============================================================
@@ -359,8 +360,10 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
 
 center              = Base.Vector(0,0,0)
 
-main_triangle_verts     = create_triangle_vertices(penta_radius)
-main_triangle_normal    = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
+#main_triangle_verts     = create_triangle_vertices(penta_radius)
+#main_triangle_normal    = main_triangle_verts[1].sub(main_triangle_verts[0]).cross(main_triangle_verts[2].sub(main_triangle_verts[0])).normalize()
+
+main_triangle_verts, main_triangle_normal, rotate_main_verts, rev_rotate_main_verts = create_triangle_vertices(penta_radius)
 led_locations           = create_led_locations(main_triangle_verts, nr_leds_per_side)
 
 if 1: 
@@ -644,7 +647,6 @@ if 1:
             box.Placement.Base      = r.multVec(box.Placement.Base)
             box.Placement.Rotation  = r.multiply(box.Placement.Rotation)
 
-    Part.show(sphere)
     pass
 
 
@@ -726,7 +728,6 @@ if 1:
         gap.Placement.Base      = r.multVec(gap.Placement.Base)
         gap.Placement.Rotation  = r.multiply(gap.Placement.Rotation)
 
-    Part.show(pcb)
 
 
 if 1:
@@ -743,7 +744,7 @@ if 1:
 
     poly = Part.makePolygon(points)
     face = Part.Face(poly)
-    inner = face.extrude(Base.Vector(4, 0, 0))
+    inner = face.extrude(Base.Vector(7-2*pcb_thickness, 0, 0))
 
     inner_feet = []
     for idx, l in enumerate(insert_locations):
@@ -763,7 +764,35 @@ if 1:
         inner_support.Placement.Base      = r.multVec(inner_support.Placement.Base)
         inner_support.Placement.Rotation  = r.multiply(inner_support.Placement.Rotation)
 
-    Part.show(inner)
+    inner.Placement.Rotation = rev_rotate_main_verts
+    
+    attach_points = [
+        rev_rotate_main_verts.multVec(Base.Vector(insert_locations[0]).add(Base.Vector(5))),
+        rev_rotate_main_verts.multVec(Base.Vector(insert_locations[1]).add(Base.Vector(5))),
+        rev_rotate_main_verts.multVec(Base.Vector(insert_locations[3]).add(Base.Vector(5))),
+        ]
+
+    attach = Part.makeBox(11, 8, 4)
+    attach.Placement.Base = Base.Vector(attach_points[0].x, 0, attach_points[0].z).add(Base.Vector(0, -8/2, -4))
+
+    inner = inner.fuse(attach)
+
+    cyl = Part.makeCylinder(2.5, 4)
+    cyl.Placement.Base = Base.Vector(attach_points[0].x + (11-4), 0, attach_points[0].z - 4)
+    inner = inner.cut(cyl)
+    #Part.show(cyl)
+
+
+sphere.Placement.Rotation = rev_rotate_main_verts
+pcb.Placement.Rotation = rev_rotate_main_verts
+
+
+
+Part.show(sphere)
+Part.show(pcb)
+Part.show(inner)
+
+#main_triangle_verts, main_triangle_normal, rev_rotate_main_verts = create_triangle_vertices(penta_radius)
 
 
 App.ActiveDocument.recompute()
