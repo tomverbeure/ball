@@ -3,7 +3,7 @@
 
     * Select face that you want as PCB outline
     * Make sure face is aligned with the view
-    * With KiCAD StepUp plugin: project selected fact to 2D
+    * With KiCAD StepUp plugin: project selected face to 2D
     * Convert 2D object to sketch
     * Export sketch to PCB layer
 

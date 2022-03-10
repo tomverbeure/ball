@@ -20,7 +20,7 @@ doc = App.newDocument()
 #============================================================
 
 # All units are in mm
-triangle_side       = 76
+triangle_side       = 80
 sphere_radius       = triangle_side / 4 * math.sqrt(10 + 2 * math.sqrt(5)) 
 penta_radius        = math.sqrt((2 * sphere_radius) ** 2 / 5)
 penta_inner_angle   = math.radians(360 / 5)
@@ -38,7 +38,7 @@ led_shaft_height    = 2.5                   # Height of the LED connector shaft
 
 # Alignment boxes on the side
 align_box_size_x        = 3.5
-align_box_size_y        = 8
+align_box_size_y        = 10
 align_box_size_z        = 1
 
 # Distance between the plane of the 3 main vertices and parallel plane towards the center
@@ -52,14 +52,14 @@ pcb_thickness       = 1.6
 #screw_insert_height = 5 
 
 # Dimensions for a magnet with radius 4 and depth 4
-screw_insert_radius = (4 + 1)/2
-screw_insert_height = 4 
+screw_insert_radius = (4 + 1.6)/2
+screw_insert_height = 4 + 1
 
-pcb_hole_radius     = 8/2                     # M2 screw
+pcb_hole_radius     = 8.4/2                     # M2 screw
 
 # These are the side magnets that keep triangles together.
-magnet_radius           = (5 +1) / 2            # + 1 for margin.
-magnet_height           = 2 + 0.2
+magnet_radius           = (5 + 0.6) / 2            # + 0.6 for margin.
+magnet_height           = 1.7 + 0.3
 magnet_dist_from_shell  = 1
 
 pcb_gap_length      = 22 
@@ -304,7 +304,7 @@ def create_led_locations(triangle_verts, nr_leds_per_side):
 
     # 1.3 is a magic number. This number should be calculated because a different
     # number is needed for different number of LEDs.
-    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 1.3
+    boundary_angle = tetra_side_angle / (nr_leds_per_side-1) / 1.5
 
     # Calculate the location of 3 LEDs in the corner.
     # The corner LEDs are placed along the curve from a triangle corner to the middle 
@@ -557,7 +557,7 @@ if 1:
 
     rotate_side_normal = main_triangle_verts[s0].cross(main_triangle_verts[s1])
     tetra_side_angle = main_triangle_verts[s0].getAngle(main_triangle_verts[s1])
-    boundary_angle = tetra_side_angle / nr_leds_per_side * 1.22
+    boundary_angle = tetra_side_angle / nr_leds_per_side * 1.1
 
     mag_axis_rotation   = App.Rotation(Base.Vector(0,0,-1), rotate_side_normal)
     mag_axis_radius_adj = (main_triangle_verts[s0].Length - magnet_radius - magnet_dist_from_shell) / main_triangle_verts[s0].Length
