@@ -375,7 +375,6 @@
     )
   )
 
-
   (junction (at 254 151.13) (diameter 0) (color 0 0 0 0)
     (uuid 0abc2a43-51bc-4198-9efb-c15db1532e52)
   )
@@ -1410,6 +1409,15 @@
   (wire (pts (xy 254 36.83) (xy 254 39.37))
     (stroke (width 0) (type default) (color 0 0 0 0))
     (uuid fe445233-a17d-43e0-9bdf-696380c43fe4)
+  )
+
+  (label "DOUT" (at 265.43 138.43 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 962f4b7e-fc0c-4469-8995-f9b86d84ee2f)
+  )
+  (label "DIN" (at 22.86 48.26 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid f21493bc-7539-494e-894d-50c7ee8c899b)
   )
 
   (symbol (lib_id "Device:C") (at 106.68 54.61 0) (unit 1)

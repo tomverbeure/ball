@@ -62,7 +62,7 @@ magnet_radius           = (5 + 0.6) / 2            # + 0.6 for margin.
 magnet_height           = 1.7 + 0.3
 magnet_dist_from_shell  = 1
 
-pcb_gap_length      = 22 
+pcb_gap_length      = 20 
 pcb_gap_width       = 3.5 
 
 inner_foot_radius       = pcb_hole_radius - 0.4
@@ -694,17 +694,29 @@ if 1:
                                 add(Base.Vector(pcb_led_intersections[nr_leds_per_side + nr_leds_per_side//2 -1]).multiply(5)). \
                                 multiply(1/11)
 
-    # Create elongated gap with rounded ends
-    gap = Part.makeBox(pcb_thickness, pcb_gap_length, pcb_gap_width)
-    gap.Placement.Base     = Base.Vector(0, -pcb_gap_length/2, -pcb_gap_width/2)
+    # Create 2 elongated gaps with rounded ends
+    gap1 = Part.makeBox(pcb_thickness, pcb_gap_length/2-pcb_gap_width, pcb_gap_width)
+    gap1.Placement.Base     = Base.Vector(0, -pcb_gap_length/2, -pcb_gap_width/2)
     cyl = Part.makeCylinder(pcb_gap_width/2, pcb_thickness)
     cyl.Placement.Base     = Base.Vector(0, -pcb_gap_length/2, 0)
     cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
-    gap = gap.fuse(cyl)
-    cyl.Placement.Base     = Base.Vector(0, pcb_gap_length/2, 0)
-    gap = gap.fuse(cyl)
+    gap1 = gap1.fuse(cyl)
+    cyl.Placement.Base     = Base.Vector(0, -pcb_gap_width, 0)
+    gap1 = gap1.fuse(cyl)
 
-    gap.Placement.Base     = Base.Vector(inner_support_loc)
+    gap2 = Part.makeBox(pcb_thickness, pcb_gap_length/2-pcb_gap_width, pcb_gap_width)
+    gap2.Placement.Base     = Base.Vector(0, pcb_gap_width, -pcb_gap_width/2)
+    cyl = Part.makeCylinder(pcb_gap_width/2, pcb_thickness)
+    cyl.Placement.Base     = Base.Vector(0, pcb_gap_length/2, 0)
+    cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+    gap2 = gap2.fuse(cyl)
+    cyl.Placement.Base     = Base.Vector(0, pcb_gap_width, 0)
+    gap2 = gap2.fuse(cyl)
+
+    gap1.Placement.Base     = Base.Vector(inner_support_loc)
+    gap2.Placement.Base     = Base.Vector(inner_support_loc)
+
+    gap = gap1.fuse(gap2)
 
     # Create supports for inner piece that fits in the gap
 
