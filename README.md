@@ -96,3 +96,8 @@ Possibilities:
 * FreeCAD over OpenSCAD: interactivity
 * The number of LEDs must be chosen so that there's room in the center for a screw.
 
+* When doing an align operation on a object that was created by an assembly of multiple identical components, 
+  first create a Compound of it in Part.  Otherwise, the align seems to happen on the main component, not on the
+  additional copies.
+
+
