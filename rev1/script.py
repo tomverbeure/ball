@@ -2,7 +2,7 @@
 # runpy.run_path(path_name='C:\\Users\\tom_v\\projects\\ball\\icosahedron\\script.py') 
 # runpy.run_path(path_name='C:\\Users\\tverbeure\\projects\\ball\\icosahedron\\script.py') 
 # runpy.run_path(path_name='/home/tom/projects/ball/icosahedron/script.py') 
-# runpy.run_path(path_name='/Users/tverbeure/projects/ball/icosahedron/script.py')
+# runpy.run_path(path_name='/Users/tverbeure/projects/ball/rev1/script.py')
 # runpy.run_path(path_name='/Users/tom/projects/ball/icosahedron/script.py')
 
 import math
@@ -52,7 +52,7 @@ pcb_thickness       = 1.6
 #screw_insert_height = 5 
 
 # Dimensions for a magnet with radius 4 and depth 4
-screw_insert_radius = (4 + 1.6)/2
+screw_insert_radius = (4 + 1.2)/2
 screw_insert_height = 4 + 1
 
 pcb_hole_radius     = 8.4/2                     # M2 screw
@@ -66,6 +66,10 @@ pcb_gap_length      = 20
 pcb_gap_width       = 3.5 
 
 inner_foot_radius       = pcb_hole_radius - 0.4
+
+# Gap between PCB gap and inner support
+inner_pcb_gap_margin    = 0.5
+inner_pcb_clearance     = 3
 
 #============================================================
 
@@ -656,29 +660,31 @@ if 1:
     #============================================================   
 
     # Make PCB bit smaller than maximum
+    # First scale the size of the PCB triangle proportionally with the distance to which the plane has moved from
+    # the outside to the center. Then make it 10% smaller with a fudge factor.
     scale_factor = (main_triangle_center.Length - pcb_plane_offset - pcb_thickness) / main_triangle_center.Length * 0.90
 
+    # The 3 coordinates that form the boundaries of the PCB triangle...
     pcb_triangle_verts = [
         Base.Vector(main_triangle_verts[0]).scale(1, scale_factor, scale_factor).sub(Base.Vector(-pcb_plane_offset-pcb_thickness)),
         Base.Vector(main_triangle_verts[1]).scale(1, scale_factor, scale_factor).sub(Base.Vector(-pcb_plane_offset-pcb_thickness)),
         Base.Vector(main_triangle_verts[2]).scale(1, scale_factor, scale_factor).sub(Base.Vector(-pcb_plane_offset-pcb_thickness)),
     ]
 
+    # Create the PCB polygon.
     pcb = Part.makePolygon( [ pcb_triangle_verts[0], pcb_triangle_verts[1], pcb_triangle_verts[2], pcb_triangle_verts[0] ] )
     pcb = Part.Face(pcb)
     pcb = pcb.extrude(Base.Vector(-pcb_thickness, 0,0))
 
     # LED locations
     for idx, l in enumerate(pcb_led_intersections):
+        # The componsation angles that we used for the sphere element can't be reused here, 
+        # so just use circular holes instead of boxes for the LED leads. It's only to get an idea. The actual
+        # PCB is done in KiCad based on a projection of the sphere element, not on this PCB example.
         cyl = Part.makeCylinder(led_conn_width/2, pcb_thickness)
         cyl.Placement.Base = l
         cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
         pcb = pcb.cut(cyl)
-
-        #b = Part.makeBox(2,4,0.2)
-        #b.Placement.Base = Base.Vector(l).add(Base.Vector(-1/2,-2/2,-3/2))
-        #b.Placement.Rotation = App.Rotation(Base.Vector(1,0,0), compensation_angles[idx])
-        #Part.show(b)
 
     # Insert holes in the PCB for the inner piece feet.
     for l in insert_locations:
@@ -686,7 +692,6 @@ if 1:
         cyl.Placement.Base = l
         cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
         pcb = pcb.cut(cyl)
-
 
     # Holes for more inner piece supports
     inner_support_loc = Base.Vector(pcb_led_intersections[nr_leds_per_side//2 -1]).multiply(3).   \
@@ -718,45 +723,54 @@ if 1:
 
     gap = gap1.fuse(gap2)
 
-    # Create supports for inner piece that fits in the gap
-
-    # Gap between PCB gap and inner support
-    margin = 1
-
-    inner_support = Part.makeBox(2 * pcb_thickness, pcb_gap_length-margin, pcb_gap_width-margin)
-    inner_support.Placement.Base     = Base.Vector(0, -(pcb_gap_length-margin)/2, -(pcb_gap_width-margin)/2)
-    cyl = Part.makeCylinder((pcb_gap_width-margin)/2, 2 * pcb_thickness)
-    cyl.Placement.Base     = Base.Vector(0, -(pcb_gap_length-margin)/2, 0)
-    cyl.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
-    inner_support = inner_support.fuse(cyl)
-    cyl.Placement.Base     = Base.Vector(0, (pcb_gap_length-margin)/2, 0)
-    inner_support = inner_support.fuse(cyl)
-
-    inner_support.Placement.Base     = Base.Vector(inner_support_loc)
-
     r = App.Rotation(main_triangle_normal, 360/3)
     for i in range(0,3):
         pcb = pcb.cut(gap)
         gap.Placement.Base      = r.multVec(gap.Placement.Base)
         gap.Placement.Rotation  = r.multiply(gap.Placement.Rotation)
 
-
-
 if 1:
     #============================================================   
     # Inner piece
     #============================================================   
 
+    # Create supports for inner piece that fits in the gap
+    inner_support_length    = pcb_gap_length/2 - pcb_gap_width 
+    inner_support_width     = pcb_gap_width - 2 * inner_pcb_gap_margin
+
+    inner_support1                      = Part.makeBox(pcb_thickness + inner_pcb_clearance, inner_support_length, inner_support_width)
+    inner_support1.Placement.Base       = Base.Vector(0, -pcb_gap_length/2, -inner_support_width/2)
+    cyl                                 = Part.makeCylinder(inner_support_width/2, pcb_thickness + inner_pcb_clearance)
+    cyl.Placement.Base                  = Base.Vector(0, -pcb_gap_length/2, 0)
+    cyl.Placement.Rotation              = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+    inner_support1                      = inner_support1.fuse(cyl)
+    cyl.Placement.Base                  = Base.Vector(0, -pcb_gap_width, 0)
+    inner_support1                      = inner_support1.fuse(cyl)
+
+    inner_support2                      = Part.makeBox(pcb_thickness + inner_pcb_clearance, inner_support_length, inner_support_width)
+    inner_support2.Placement.Base       = Base.Vector(0, pcb_gap_width, -inner_support_width/2)
+    cyl                                 = Part.makeCylinder(inner_support_width/2, pcb_thickness + inner_pcb_clearance)
+    cyl.Placement.Base                  = Base.Vector(0, pcb_gap_length/2, 0)
+    cyl.Placement.Rotation              = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
+    inner_support2                      = inner_support2.fuse(cyl)
+    cyl.Placement.Base                  = Base.Vector(0, pcb_gap_width, 0)
+    inner_support2                      = inner_support2.fuse(cyl)
+
+    inner_support1.Placement.Base       = Base.Vector(inner_support_loc)
+    inner_support2.Placement.Base       = Base.Vector(inner_support_loc)
+
+    inner_support = inner_support1.fuse(inner_support2)
+
     points = [
-            Base.Vector(insert_locations[0]).add(Base.Vector(2*pcb_thickness,0,0)),  
-            Base.Vector(insert_locations[1]).add(Base.Vector(2*pcb_thickness,0,0)),  
-            Base.Vector(insert_locations[2]).add(Base.Vector(2*pcb_thickness,0,0)),  
-            Base.Vector(insert_locations[0]).add(Base.Vector(2*pcb_thickness,0,0)),  
+            Base.Vector(insert_locations[0]).add(Base.Vector(pcb_thickness + inner_pcb_clearance,0,0)),  
+            Base.Vector(insert_locations[1]).add(Base.Vector(pcb_thickness + inner_pcb_clearance,0,0)),  
+            Base.Vector(insert_locations[2]).add(Base.Vector(pcb_thickness + inner_pcb_clearance,0,0)),  
+            Base.Vector(insert_locations[0]).add(Base.Vector(pcb_thickness + inner_pcb_clearance,0,0)),  
             ]
 
     poly = Part.makePolygon(points)
     face = Part.Face(poly)
-    inner = face.extrude(Base.Vector(7-2*pcb_thickness, 0, 0))
+    inner = face.extrude(Base.Vector(7-pcb_thickness - inner_pcb_clearance, 0, 0))
 
     inner_feet = []
     for idx, l in enumerate(insert_locations):
