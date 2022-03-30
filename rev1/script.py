@@ -1,9 +1,9 @@
 # import runpy
-# runpy.run_path(path_name='C:\\Users\\tom_v\\projects\\ball\\icosahedron\\script.py') 
-# runpy.run_path(path_name='C:\\Users\\tverbeure\\projects\\ball\\icosahedron\\script.py') 
-# runpy.run_path(path_name='/home/tom/projects/ball/icosahedron/script.py') 
+# runpy.run_path(path_name='C:\\Users\\tom_v\\projects\\ball\\rev1\\script.py') 
+# runpy.run_path(path_name='C:\\Users\\tverbeure\\projects\\ball\\rev1\\script.py') 
+# runpy.run_path(path_name='/home/tom/projects/ball/rev1/script.py') 
 # runpy.run_path(path_name='/Users/tverbeure/projects/ball/rev1/script.py')
-# runpy.run_path(path_name='/Users/tom/projects/ball/icosahedron/script.py')
+# runpy.run_path(path_name='/Users/tom/projects/ball/rev1/script.py')
 
 import math
 import Part
@@ -774,7 +774,8 @@ if 1:
 
     inner_feet = []
     for idx, l in enumerate(insert_locations):
-        inner_foot = Part.makeCylinder(inner_foot_radius, screw_insert_height+3)
+        #inner_foot = Part.makeCylinder(inner_foot_radius, screw_insert_height+3)
+        inner_foot = Part.makeCylinder(inner_foot_radius, 7)
         inner_foot.Placement.Base = Base.Vector(l)
         inner_foot.Placement.Rotation = App.Rotation(Base.Vector(0,0,1), Base.Vector(1,0,0))
         inner = inner.fuse(inner_foot)
@@ -798,15 +799,28 @@ if 1:
         rev_rotate_main_verts.multVec(Base.Vector(insert_locations[3]).add(Base.Vector(5))),
         ]
 
+    # Attachment point with screw hole
+    # There are 3 versions:
+    #   - attachment point in the center
+    #   - attachment point on the left
+    #   - attachment point on the right
+
+    attach_hole_radius = 2.5
+
     attach = Part.makeBox(11, 8, 4)
+    cyl = Part.makeCylinder(attach_hole_radius, 4)
+    cyl.Placement.Base = Base.Vector(11-4, 8/2, 0)
+    attach = attach.cut(cyl)
+
+    # Center
     attach.Placement.Base = Base.Vector(attach_points[0].x, 0, attach_points[0].z).add(Base.Vector(0, -8/2, -4))
+    inner_center= inner.fuse(attach)
 
-    inner = inner.fuse(attach)
+    attach.Placement.Base = Base.Vector(attach_points[0].x, attach_points[0].y * -3/5, attach_points[0].z).add(Base.Vector(0, -8/2, -4))
+    inner_left= inner.fuse(attach)
 
-    cyl = Part.makeCylinder(2.5, 4)
-    cyl.Placement.Base = Base.Vector(attach_points[0].x + (11-4), 0, attach_points[0].z - 4)
-    inner = inner.cut(cyl)
-    #Part.show(cyl)
+    attach.Placement.Base = Base.Vector(attach_points[0].x, attach_points[0].y * 3/5, attach_points[0].z).add(Base.Vector(0, -8/2, -4))
+    inner_right= inner.fuse(attach)
 
 
 sphere.Placement.Rotation = rev_rotate_main_verts
@@ -816,7 +830,9 @@ pcb.Placement.Rotation = rev_rotate_main_verts
 
 Part.show(sphere)
 Part.show(pcb)
-Part.show(inner)
+Part.show(inner_center)
+Part.show(inner_left)
+Part.show(inner_right)
 
 #main_triangle_verts, main_triangle_normal, rev_rotate_main_verts = create_triangle_vertices(penta_radius)
 
