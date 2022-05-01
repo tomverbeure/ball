@@ -1,3 +1,6 @@
 (sym_lib_table
   (lib (name "MCU_RaspberryPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/../libs/KiCad-RP-Pico/RP-Pico Libraries/MCU_RaspberryPi_and_Boards.kicad_sym")(options "")(descr ""))
+  (lib (name "MPU-6050_Board")(type "KiCad")(uri "$(KIPRJMOD)/../libs/MPU-6050_Board/MPU-6050_Board.kicad_sym")(options "")(descr ""))
+  (lib (name "LM2596_Board")(type "Legacy")(uri "$(KIPRJMOD)/../libs/LM2596_Board/yaaj_dcdc_stepdown_lm2596.lib")(options "")(descr ""))
+  (lib (name "battery_holder")(type "KiCad")(uri "C:/Users/tverbeure/projects/ball/pcb/libs/battery_holder.kicad_sym")(options "")(descr ""))
 )

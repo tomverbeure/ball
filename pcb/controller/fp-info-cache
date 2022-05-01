@@ -1,4 +1,11 @@
-20117646162358537
+20130803533061699
+2x18650_battery_holder
+battery_holder
+footprint StepUp generated footprint
+
+0
+4
+4
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -57574,6 +57581,13 @@ Yellow 5381 Series LED
 0
 2
 2
+LM2596_Board
+YAAJ_DCDC_StepDown_LM2596
+
+
+0
+4
+4
 MCU_RaspberryPi_and_Boards
 Crystal_SMD_HC49-US
 SMD Crystal HC-49-SD http://cdn-reichelt.de/documents/datenblatt/B400/xxx-HC49-SMD.pdf, 11.4x4.7mm^2 package
@@ -57595,6 +57609,20 @@ Through hole pin header THT 2x20 2.54mm double row
 0
 86
 43
+MPU-6050_Board
+MPU-6050_Board
+footprint StepUp generated footprint
+
+0
+8
+8
+MPU-6050_Board
+MPU-6050_Board_no_screw_holes
+footprint_no_screw_holes StepUp generated footprint
+
+0
+8
+8
 Module
 A20_OLINUXINO_LIME2
 A20 Olinuxino LIME2, 1.2GHz, 512-1024MB RAM, Micro-SD, NAND or eMMC, 1000Mbit Ethernet
@@ -85623,3 +85651,31 @@ varistor SIOV
 0
 2
 2
+WeMos_D1_mini
+wemos-d1-mini-connectors-only
+
+
+0
+16
+16
+WeMos_D1_mini
+wemos-d1-mini-embedded
+
+
+0
+16
+16
+WeMos_D1_mini
+wemos-d1-mini-with-pin-header
+
+
+0
+16
+16
+WeMos_D1_mini
+wemos-d1-mini-with-pin-header-and-connector
+
+
+0
+16
+16

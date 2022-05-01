@@ -805,11 +805,12 @@ if 1:
     #   - attachment point on the left
     #   - attachment point on the right
 
-    attach_hole_radius = 2.5
+    attach_hole_radius  = 1.6
+    attach_hole_length  = 9
 
-    attach = Part.makeBox(11, 8, 4)
+    attach = Part.makeBox(attach_hole_length, 8, 4)
     cyl = Part.makeCylinder(attach_hole_radius, 4)
-    cyl.Placement.Base = Base.Vector(11-4, 8/2, 0)
+    cyl.Placement.Base = Base.Vector(attach_hole_length-2.5, 8/2, 0)
     attach = attach.cut(cyl)
 
     # Center

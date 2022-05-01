@@ -1,6 +1,6 @@
 (footprint "MPU-6050_Board_no_screw_holes" (version 20211014) (generator pcbnew)
   (layer "F.Cu")
-  (tedit 625C32F2)
+  (tedit 625C33D7)
   (descr "footprint_no_screw_holes StepUp generated footprint")
   (attr through_hole)
   (fp_text reference "REF**" (at 0 1) (layer "F.SilkS")
@@ -27,7 +27,7 @@
   (pad "6" thru_hole circle (at -6.2 3.81) (size 1.8 1.8) (drill 1.04) (layers *.Cu *.Mask) (tstamp 5e2e3109-04dc-4c7b-88b2-136a6b84b429))
   (pad "7" thru_hole circle (at -6.2 6.35) (size 1.8 1.8) (drill 1.04) (layers *.Cu *.Mask) (tstamp 9aa952ae-2882-4a5c-bed5-7fd4d1a53054))
   (pad "8" thru_hole circle (at -6.2 8.89) (size 1.8 1.8) (drill 1.04) (layers *.Cu *.Mask) (tstamp 0c16fdfc-e67b-4848-926b-7c12d15161d5))
-  (model "C:/Users/tverbeure/projects/ball/pcb/libs/MPU-6050_Board/MPU-6050_Board-3d_model.wrl"
+  (model "$(KIPRJMOD)/../libs/MPU-6050_Board/MPU-6050_Board-3d_model.wrl"
     (offset (xyz 0 0 0))
     (scale (xyz 0.394 0.394 0.394))
     (rotate (xyz 0 0 0))
