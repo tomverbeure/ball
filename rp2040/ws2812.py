@@ -3,10 +3,32 @@ from machine import Pin
 import rp2
  
 # Configure the number of WS2812 LEDs, pins and brightness.
-NUM_LEDS = 21
+NUM_LEDS = 20 * 21
 PIN_NUM = 0
 brightness = 0.1
 LED_PIN = 25
+
+
+def led_pattern(phase):
+    mask = array.array("I", [0 for _ in range(NUM_LEDS)])
+
+    for i in range(len(ar)):
+        led_pos = i % 21
+        
+        if phase==1:
+            if led_pos < 3:
+                mask[i] = 1
+
+        elif phase==2:
+            if led_pos < 6:
+                mask[i] = 1
+
+        elif phase==3:
+            if led_pos >= 6:
+                mask[i] = 1
+
+    return mask
+        
  
 @rp2.asm_pio(sideset_init=rp2.PIO.OUT_LOW, out_shiftdir=rp2.PIO.SHIFT_LEFT, autopull=True, pull_thresh=24)
 def ws2812():
@@ -45,10 +67,14 @@ def pixels_show():
 def pixels_set(i, color):
     ar[i] = (color[1]<<16) + (color[0]<<8) + color[2]
  
-def pixels_fill(color):
+def pixels_fill(color, phase):
+    mask = led_pattern(phase)
+
     for i in range(len(ar)):
-        pixels_set(i, color)
- 
+        if mask[i] == 1:
+            pixels_set(i, color)
+        else:
+            pixels_set(i, (0,0,0))
  
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -58,10 +84,11 @@ CYAN = (0, 255, 255)
 BLUE = (0, 0, 255)
 PURPLE = (180, 0, 255)
 WHITE = (255, 255, 255)
-COLORS = (BLACK, RED, YELLOW, GREEN, CYAN, BLUE, PURPLE, WHITE)
+COLORS = (RED, YELLOW, GREEN, CYAN, BLUE, PURPLE, WHITE)
  
 while True:
     for color in COLORS:
-        pixels_fill(color)
-        pixels_show()
-        time.sleep(0.5)
+        for phase in range(0,4):
+            pixels_fill(color, phase)
+            pixels_show()
+            time.sleep(0.2)
