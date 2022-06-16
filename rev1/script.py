@@ -131,16 +131,16 @@ def line_plane_intersection(line, plane):
     return None
 
 def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01, search_dir = 1):
-    App.Console.PrintMessage("\nfind_correct_angle\n")
-    App.Console.PrintMessage("dir_orig:")
-    App.Console.PrintMessage(dir_orig)
-    App.Console.PrintMessage("\n")
-    App.Console.PrintMessage("dir_new:")
-    App.Console.PrintMessage(dir_new)
-    App.Console.PrintMessage("\n")
-    App.Console.PrintMessage("desired_angle:")
-    App.Console.PrintMessage(desired_angle)
-    App.Console.PrintMessage("\n")
+#    App.Console.PrintMessage("\nfind_correct_angle\n")
+#    App.Console.PrintMessage("dir_orig:")
+#    App.Console.PrintMessage(dir_orig)
+#    App.Console.PrintMessage("\n")
+#    App.Console.PrintMessage("dir_new:")
+#    App.Console.PrintMessage(dir_new)
+#    App.Console.PrintMessage("\n")
+#    App.Console.PrintMessage("desired_angle:")
+#    App.Console.PrintMessage(desired_angle)
+#    App.Console.PrintMessage("\n")
 
 #    desired_angle = (desired_angle + 360) % 360
 #
@@ -160,7 +160,7 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01, sea
     angle_accuracy = 30
 
     while cnt < 20:
-        App.Console.PrintMessage(".")
+#        App.Console.PrintMessage(".")
         cnt = cnt + 1
 
         dir_rot     = App.Rotation(dir_orig, dir_new).multiply(App.Rotation(dir_orig, compensation_angle))
@@ -232,9 +232,9 @@ def find_correct_angle(dir_orig, dir_new, desired_angle, angle_epsilon=0.01, sea
 
         #Draft.makeWire([vc1, vc2])
 
-    App.Console.PrintMessage("compensation_angle:")
-    App.Console.PrintMessage(compensation_angle)
-    App.Console.PrintMessage("\n")
+#    App.Console.PrintMessage("compensation_angle:")
+#    App.Console.PrintMessage(compensation_angle)
+#    App.Console.PrintMessage("\n")
 
     #Draft.makeWire([vc1, vc2])
 
@@ -407,7 +407,7 @@ if 1:
 
 if 1:
     # Create LED holes
-    led_holes = []
+    led_holes   = []
 
     led_shaft   = Part.makeBox(led_shaft_height ,led_shaft_width, led_conn_length)
     led_shaft.Placement.Base = Base.Vector(-led_shaft_height/2, -led_shaft_width/2, 0)
@@ -447,12 +447,12 @@ if 1:
         i1 = center_proj
         i2 = Base.Vector(i1.x, i1.y+1, i1.z)
         angle_to_center = math.degrees((i0.sub(i1)).getAngle(i2.sub(i1)))
-        App.Console.PrintMessage("angle_to_center:")
-        App.Console.PrintMessage(angle_to_center)
-        App.Console.PrintMessage("\n")
-        App.Console.PrintMessage("i0:")
-        App.Console.PrintMessage(i0)
-        App.Console.PrintMessage("\n")
+#        App.Console.PrintMessage("angle_to_center:")
+#        App.Console.PrintMessage(angle_to_center)
+#        App.Console.PrintMessage("\n")
+#        App.Console.PrintMessage("i0:")
+#        App.Console.PrintMessage(i0)
+#        App.Console.PrintMessage("\n")
 
         if i0.y >= 0 and i0.z >= 0:
             desired_angle = 90-angle_to_center
@@ -824,11 +824,23 @@ if 1:
     inner_right= inner.fuse(attach)
 
 
+# Rotate back to original position
 sphere.Placement.Rotation = rev_rotate_main_verts
 pcb.Placement.Rotation = rev_rotate_main_verts
 
+if 1:
+    final_led_coords = []
+
+    for r in range(0,5):
+        for l in led_locations:
+            lr = rev_rotate_main_verts.multVec(l)
+
+            s = Part.makeSphere(1)
+            s.Placement.Base = lr
+            Part.show(s)
 
 
+Part.show(sphere)
 Part.show(sphere)
 Part.show(pcb)
 Part.show(inner_center)
@@ -841,4 +853,8 @@ Part.show(inner_right)
 App.ActiveDocument.recompute()
 Gui.activeDocument().activeView().viewRight()
 Gui.SendMsgToActiveView("ViewFit")
+
+#f = open("C:\\Users\\tverbeure\\projects\\ball\\test.txt", "w")
+#f.write("Hello world!\n")
+#f.close()
 
