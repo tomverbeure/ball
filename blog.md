@@ -2,24 +2,31 @@
 
 # Introduction
 
-This project started roughly in the summer of 2019. I've always been fascinated by LED creations: massive LED planes on
+This project started roughly in the summer of 2019. I've always been fascinated by LED creations: massive LED panels on
 buildings with animations that seem to jump out into the 3D world, LED cubes with mesmerizing animations, 
-Greg Davil's small size cube and icosahedron at the Hackaday Superconference. There was always the plan to
-make something myself, and over the years I assembled nice assortment of LED panels, RGB LED strips, and even a few bags 
-of plain vanilla single color through-hole LEDs: the "buy" button on AliExpress is sometimes irresitable. 
+[Greg Davill's icosahedron](https://www.hackster.io/news/greg-davill-s-led-icosahedron-packs-20-panels-2-400-leds-into-a-tiny-handheld-fascinator-5de9ad35872a) 
+at the Hackaday Superconference. There was always the plan to make something myself, and over the years 
+I assembled nice assortment of LED panels, RGB LED strips, and even a few bags of plain vanilla single color 
+through-hole LEDs: the "buy" button on AliExpress is sometimes irresitable. 
 
-But nothing ever came off it, until a bunch of lunch time discussion at work (remember them?) with my friend and
+But nothing ever came off it, until a bunch of lunch time discussions at work (remember them?) with my friend and
 3D printing wizzard Jens about how to approach an LED sphere. The idea is not totally original, but there's surprisingly
-little out there, even today, almost 3 years after our first discussions: ... created an wireframe sphere with 192 LEDs, ...
-created these 2 geodesic structures that are a close enough approximation. and just a few months ago, ... showed off this 
-one. All of these projects are amazing and their creators spent long hours getting it all together. But there's something
-about each of them that doesn't quite do it to me: I want an LED sphere that's truly round and that doesn't have one
-obvious north-south axis with perpendicular circles around it.
+little out there, even today, almost 3 years after our first discussion: Jiri Paus built a 
+[beautiful wireframe sphere with 192 LEDs](https://www.instructables.com/Christmas-LED-Sphere/), 
+Whity created created these [2 geodesic structures](https://www.printables.com/model/40182-geodesick-rgb-led-spheres)
+that are a close enough approximation, with 80 and 180 LEDs.
+
+All these projects are amazing and their creators spent long hours getting it all together. But there's something
+about each of them that doesn't quite do it for me: the wireframe LED sphere only has axial symmetry, the geodesic
+sphere isn't really round, and 80, 180, or even 192 LEDs is just not enough.
+
+I wanted an LED sphere that's truly round, without an obvious north-south axis, and with moar LEDs too. 
+But who am I kidding, most of all, I wanted to design it from the ground up all by myself.
 
 # Deconstruction of a Sphere into Smaller Pieces
 
-An ideal LED sphere has the LEDs evenly distributed of all over the surface: no matter how to rotate the object, or which
-angle you look at it, the LEDs are organized exactly the same. There is no top, no bottom, no obvious sub-element around
+An ideal LED sphere has the LEDs spread perfectly even all over the surface: no matter how to rotate the object, or which
+angle you look at it, the LEDs are organized exactly the same. There is no top, no bottom, no obvious sub-structure around
 which the LEDs are organized.
 
 The problem with this is that it is not possible to do this. There are only good approximations.
@@ -32,18 +39,107 @@ Another one is the HEALPix algorithm. https://en.wikipedia.org/wiki/HEALPix
 
 Unfortunately, it's one thing to come up with an arrangment that is visually almost perfect, it's another to come
 up with something that can be physically created with a reasonable amount of effort. One of my additional constraints
-was that the LEDs can be soldered on some kind of PCB: amazing as it is, precision soldering 192 LEDs, or more, is just
-not something I'm will to do.
+was that the LEDs can be soldered down onto some kind of PCB. Because amazing as it is, precision soldering 192 LEDs, or more, 
+onto a metal wire frame is just not something I'm willing to do.
 
-One solution Jens and I looked in to where flex PCBs that are arranged as follows:
+One solution Jens and I looked in to were flex PCBs that are arranged as follows:
 
-I still believe that this solution is very promising, but I decided the reduce the problem even more, and
-fall back to a more traditional approach of a polyhedra base with curved shell pieces around it. The LED ball of
-... takes that to the extreme in the sense that there isn't a curved surface at all: it's just triangles. 
+Flex PCBs have the advantage that you can solder down the LEDs onto the PCB using the regular and efficient
+surface mounted method of solder paste and reflow oven, yet afterwards you can wrap them around a curved
+surface... within limits.
 
-There are many ways to reduce a sphere into a tesselated polyhedral structure: something as simple as a tetrahedron or 
-a cube can work with only 4 or 6 faces, the underlying structure is just too coarse to be visually appealing. The higher
-the number of faces, the closer the polyhedron will match an actual sphere, and the better it will look.
+I still believe that this solution is promising, but flex PCBs are a big unknown (how much can they really be
+flexed?) and they're pretty expensive too.
+
+So after a while, I decided the reduce the problem even more, and fell back to a more traditional approach of a 
+polyhedral inner base with 3D printed curved sphere elements around it, a flat PCB, and through-hole LEDs.
+
+Whity's LED sphere takes that concept essentially to the extreme in the sense that there isn't a curved surface at all: 
+it's just triangles all the way down, and there's 1 PCB per LED.
+
+There are many ways to split up a sphere into a set of individual pieces. The basic principle goes rougly 
+as follows: you start with a polyhedron that is circumscribed by a sphere (meaning: all the vertices
+of the polyhedron lay on the surface of the sphere.) Then you project the edges of the polyhedrom onto
+the sphere surface.
+
+Wikipedia has a [table with all such regular and semi-regular polyhedra](https://en.wikipedia.org/wiki/Spherical_polyhedron#Examples)
+
+One could use something as simple as a regular tetrahedron, built out of 4 triangles, that splits the sphere surface
+into 4 identical spherical sections:
+
+![Regular tetrahedron projected onto sphere](/blog_assets/spherical_tetrahedron.png)
+
+Here's the version with a cube (6 identical sections):
+
+![Cube projected onto sphere](/blog_assets/spherical_cube.png)
+
+A regular octahedron (8 identical section):
+
+![Regular octahedron projected onto sphere](/blog_assets/spherical_octahedron.png)
+
+A regular dodecahedron (12 identical sections):
+
+![Regular dodecahedron projected onto sphere](/blog_assets/spherical_dodecahedron.png)
+
+And finally a regular icosahedron (20 identical section): 
+
+![Regular icosahedron projected onto sphere](/blog_assets/spherical_icosahedron.png)
+
+From that large Wikipedia table with polyhedra, I've cherry-picked the regular version. These are also called
+theh [Platonic solids](https://en.wikipedia.org/wiki/Platonic_solid). For a project like this, they have
+the atrractive property that you need exactly 1 sphere element to build up the full sphere. This means that 
+you only need to design 1 such piece for your 3D printer and only 1 PCB.
+
+This is certainly not a hard limitation: the truncated icosahedron, used for soccer balls, is a very good 
+candidate as well:
+
+![Truncated icosahedron projected onto sphere](/blog_assets/spherical_truncated_icosahedron.png)
+
+Compared to a regular icosahedron, which requires 20 identical spherical triangles, the truncated version
+needs 20 spherical hexagons and 12 spherical pentagons. That's 2 PCBs and 2 sphere elements to design, and
+there's also the question about how to evenly spread LEDs across these 2 surfaces such that the general
+density of the LEDs is the same: since we're dealing with thru-hole LEDs which density constraints and
+some other geometrical limitations as well.
+
+Let's talk about those geometrical limitations. 
+
+If the LEDs are located on a curved, spherical, surface while the LED leads are soldered to a flat PCB,
+a lower order polyhedron will result in a higher variance in distance between surface and PCB, and in a higher
+maximum incident angle at which the leads meet with the PCB surface.
+
+Let me illustrated that with a 2D diagram, but it applies to the 3D version as well.
+
+In the figure on the left, a circle is split up into 3 equal sections. In the figure of the right, the same
+circle is split into 8 equal sections. The outside circle is the actual surface, the dotted inside circle
+is the one in which a triangle or octagon is inscribed. The size of the inside circle depends on the size
+of the LEDs that must reside within the shell: it contains part of the main LED body as well as a small
+part of the LED leads. The line between the outer points of a section is the 2D equivalent of a PCB.
+
+LEDs that are in the center of a section are perpendicular to this PCB. They are the easiest to mount because
+they behave just like any other thru-hole component. The LEDs on the boundary of a section, however, 
+hit the PCB at a sharp angle, and yet need to go through the PCB perpendicularly.
+
+When there are only 3 sections, the left case, this incident angle is much sharper than for the right case.
+
+The second issue is even more problematic: LED leads have a fixed length. This length limits the maximum
+radius of the circle. In the case on the left, the leads of the LED in the center of a section don't
+reach all the way to the PCB! The case on the right doesn't have that problem.
+
+It should be clear that dividing a circle, or a sphere, into a higher number of section has some
+crucial mechanical advantages.
+
+But there's one additional benefit: it just looks better to have more sections.
+
+For all the reasons above, I decided on the highest possible regular inscribed polyhedron: the icosahedron.
+
+
+Another consideration is that a lower order inner polyhedron will result in an outside LED arrangement that's 
+is just too coarse to be visually appealing. Since there'll be one PCB design per inner face, the LED arrangement
+of each sphere element will be identical. Have more sphere elements just looks better.
+
+XXXX define sphere element XXXX
+
+The higher the number of faces, the closer the polyhedron will match an actual sphere, and the better it will look.
 
 https://cage.ugent.be/~hs/polyhedra/polyhedra.html
 
