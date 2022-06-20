@@ -827,8 +827,9 @@ if 1:
 # Rotate back to original position
 sphere.Placement.Rotation = rev_rotate_main_verts
 pcb.Placement.Rotation = rev_rotate_main_verts
+#Part.show(sphere)
 
-if 1:
+if None:
     final_led_coords = []
 
     for r in range(0,5):
@@ -839,13 +840,40 @@ if 1:
             s.Placement.Base = lr
             Part.show(s)
 
+if True:
+    for i in range(0,5):
+        r = App.Rotation(Base.Vector(0, 0, 1), i * (360/5))
+        sphere.Placement.Rotation = r.multiply(rev_rotate_main_verts)
+        Part.show(sphere)
 
-Part.show(sphere)
-Part.show(sphere)
-Part.show(pcb)
-Part.show(inner_center)
-Part.show(inner_left)
-Part.show(inner_right)
+if True:
+    for i in range(0,5):
+        r = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0, 0, 1), (i + 0.5) * (360/5)))
+        sphere.Placement.Rotation = r.multiply(rev_rotate_main_verts)
+        Part.show(sphere)
+
+if True:
+    for i in range(0,5):
+        # For the 63.4... angle, see http://www.rwgrayprojects.com/rbfnotes/polyhed/PolyhedraData/Icosahedron/Icosahedron.pdf 
+        r = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0, 0, 1), i * (360/5))).multiply(rev_rotate_main_verts).multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
+        sphere.Placement.Rotation = r
+        Part.show(sphere)
+
+if True:
+    for i in range(0,5):
+        r = App.Rotation(Base.Vector(0, 0, 1), (i+0.5) * (360/5)).multiply(rev_rotate_main_verts).multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
+        #r = rev_rotate_main_verts.multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
+        sphere.Placement.Rotation = r
+        Part.show(sphere)
+
+
+
+#Part.show(pcb)
+#Part.show(inner_center)
+#Part.show(inner_left)
+#Part.show(inner_right)
+
+#Part.show(sphere)
 
 #main_triangle_verts, main_triangle_normal, rev_rotate_main_verts = create_triangle_vertices(penta_radius)
 
