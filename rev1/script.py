@@ -842,27 +842,26 @@ if None:
 
 if True:
     for i in range(0,5):
-        r = App.Rotation(Base.Vector(0, 0, 1), i * (360/5))
-        sphere.Placement.Rotation = r.multiply(rev_rotate_main_verts)
-        Part.show(sphere)
-
-if True:
-    for i in range(0,5):
-        r = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0, 0, 1), (i + 0.5) * (360/5)))
-        sphere.Placement.Rotation = r.multiply(rev_rotate_main_verts)
-        Part.show(sphere)
-
-if True:
-    for i in range(0,5):
-        # For the 63.4... angle, see http://www.rwgrayprojects.com/rbfnotes/polyhed/PolyhedraData/Icosahedron/Icosahedron.pdf 
-        r = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0, 0, 1), i * (360/5))).multiply(rev_rotate_main_verts).multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
+        r = App.Rotation(Base.Vector(0, 0, 1), i * (360/5)).multiply(rev_rotate_main_verts)
         sphere.Placement.Rotation = r
         Part.show(sphere)
 
 if True:
     for i in range(0,5):
-        r = App.Rotation(Base.Vector(0, 0, 1), (i+0.5) * (360/5)).multiply(rev_rotate_main_verts).multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
-        #r = rev_rotate_main_verts.multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
+        r = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0, 0, -1), (i + 0.5) * (360/5))).multiply(rev_rotate_main_verts)
+        sphere.Placement.Rotation = r
+        Part.show(sphere)
+
+if True:
+    for i in range(0,5):
+        # For the 63.4... angle, see http://www.rwgrayprojects.com/rbfnotes/polyhed/PolyhedraData/Icosahedron/Icosahedron.pdf 
+        r = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0, 0, -1), i * (360/5))).multiply(rev_rotate_main_verts).multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
+        sphere.Placement.Rotation = r
+        Part.show(sphere)
+
+if True:
+    for i in range(0,5):
+        r = App.Rotation(Base.Vector(0, 0, -1), (i+0.5) * (360/5)).multiply(rev_rotate_main_verts).multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
         sphere.Placement.Rotation = r
         Part.show(sphere)
 
