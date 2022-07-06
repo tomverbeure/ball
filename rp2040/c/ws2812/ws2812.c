@@ -18,8 +18,48 @@ typedef struct s_led_coord {
     float z;
 } t_led_coord;
 
+// Maps the triangle order of the FreeCAD model (and thus the LED coordinates)
+// to the way the triangles have been physically wired together.
 int remap_triangle[20] = {
-    0, 6, 4, 7, 3, 8, 2, 9, 1, 5,   10, 11, 12, 13, 14,  17, 18, 19 , 15, 16
+    5, 6, 7, 8, 9,  0, 4, 3, 2, 1, 10, 11, 12, 13, 14,  16, 15, 19, 18, 17
+};
+
+int rotate_triangle[20] = { 
+    0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  2, 2, 2, 2, 1,  1, 1, 1, 1, 1
+};
+
+// The FreeCAD model has the LEDs in scan order. The PCB has them
+// going from center to outside. So remap them from scan order to
+// PCB order. The numbers are the LED numbers on the PCB, so it
+// starts with 1!
+int remap_led[3][21] = {
+    // LED 2 on top
+    { 
+    15, 16, 17, 18, 19, 20, 
+    14, 5, 2, 6, 21,
+    13, 1, 3, 7, 
+    12, 4, 8, 
+    11, 9, 
+    10
+    },
+    // LED 1 on top
+    { 
+    10, 11, 12, 13, 14, 15,
+    9,  4, 1, 5, 16,
+    8, 3, 2, 17, 
+    7, 6, 18,
+    21, 19,
+    20
+    },
+    // LED 3 on top
+    { 
+    20, 21, 7, 8, 9, 10,
+    19, 6, 3, 4, 11,
+    18, 2, 1, 12,
+    17, 5, 13,
+    16, 14,
+    15
+    }
 };
 
 #include "led_coords.h"
@@ -119,18 +159,50 @@ void pattern_gradient(uint len, uint t)
     }
 }
 
-void pattern_gradient_x(uint len, float t)
+void pattern_gradient_x(float t)
 {
-    for(int i = 0; i < len; ++i){
+    // For each LED:
+    // - look up the (x,y,z) coordinates
+    // - calculate the value
+    // - determine the virtual triangle number (LED value/21)
+    // - look up the physical triangle (remap table)
+    // - look up the LED number (in case the triangle is rotate)
+    // - Store LED RGB value in array
+    // - When all is done, send array to PIO
+
+    uint32_t led_rgb_values[NUM_PIXELS];
+
+    // Init dummy value...
+    for(int i = 0; i < NUM_PIXELS; ++i){
+        led_rgb_values[i] = 0xff;
+    }
+
+    for(int i = 0; i < NUM_PIXELS; ++i){
         const t_led_coord *c = &led_coords[i];
 
         uint8_t r,g,b; 
 
-        r = (c->x <= t) ? 255 : 0;
+        r = 0;
         g = 0;
         b = 0;
 
-        put_pixel(urgb_u32(r,g,b));
+        r = (c->x <= t) ? 255 : 0;
+        g = (c->y <= t) ? 255 : 0;
+        b = (c->z <= t) ? 255 : 0;
+
+        int virtual_triangle = i/21;
+        int physical_triangle = remap_triangle[virtual_triangle];
+        int virtual_led = i - (virtual_triangle * 21);
+        //int physical_led = remap_led[0][virtual_led]-1;
+        //int physical_led = virtual_led;
+        int physical_led = remap_led[rotate_triangle[virtual_triangle]][virtual_led]-1;
+        int led_nr = physical_triangle * 21 + physical_led;
+        
+        led_rgb_values[led_nr] = urgb_u32(r,g,b);
+    }
+
+    for(int i = 0; i < NUM_PIXELS; ++i){
+        put_pixel(led_rgb_values[i]);
     }
 }
 
@@ -182,11 +254,11 @@ void pattern_triangle_order(uint len, uint t)
 void pattern_vertical_band(uint len, uint t)
 {
     int bands[5][4]= {
-        { 10, 9, 0, 15}, 
-        { 11, 1, 2, 16}, 
-        { 12, 3, 4, 17}, 
-        { 13, 5, 6, 18}, 
-        { 14, 7, 8, 19} 
+        { 10, 0, 5, 16}, 
+        { 11, 1, 6, 17}, 
+        { 12, 2, 7, 17}, 
+        { 13, 3, 8, 18}, 
+        { 14, 4, 9, 15} 
     };
     
 
@@ -256,11 +328,11 @@ int main() {
         }
     }
 #endif
-#if 0
+#if 1
     while(1){
-        for(float t=-1.0;t<1.0;t+=0.05){
-            pattern_gradient_x(NUM_PIXELS, t);
-            sleep_ms(250); 
+        for(float t=-1.05;t<1.05;t+=0.04){
+            pattern_gradient_x(t);
+            //sleep_ms(2); 
         }
     }
 #endif
@@ -268,11 +340,11 @@ int main() {
     while(1){
         for(int t=0;t<20;++t){
             pattern_triangle_order(NUM_PIXELS, t);
-            sleep_ms(400); 
+            sleep_ms(1000); 
         }
     }
 #endif
-#if 1
+#if 0
     while(1){
         for(int t=0;t<5;++t){
             pattern_vertical_band(NUM_PIXELS, t);
