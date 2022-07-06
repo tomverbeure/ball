@@ -469,18 +469,19 @@ int main() {
         {
             t_vec   start;
             t_vec   dir;
-            t_color color = { rnd() & 255, rnd() & 255, rnd() & 255 };
+            t_color color = { (uint8_t)rnd(), (uint8_t)rnd(), (uint8_t)rnd() };
     
             start.x = frnd(-1.0, 1.0);
             start.y = frnd(-1.0, 1.0);
             start.z = frnd(-1.0, 1.0);
             start = vec_normalize(start);
             dir = vec_mul_scalar(start, -1.0);
+            float thickness = frnd(0.05, 0.6);
 
             float speed = frnd(0.06, 0.15);
 
-            for(float l=0;l<2.05;l+=speed){
-                pattern_rings(l, 0.1, start, dir, color);
+            for(float l=-thickness;l<2+thickness;l+=speed){
+                pattern_rings(l, thickness, start, dir, color);
             }
         }
     }
