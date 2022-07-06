@@ -144,30 +144,27 @@ void pattern_greys(uint len, uint t) {
     }
 }
 
-void pattern_gradient(uint len, uint t)
+int calc_phys_led_nr(int virt_led_nr)
 {
-    for(int i = 0; i < len; ++i){
-        const t_led_coord *c = &led_coords[i];
+    // - determine the virtual triangle number (LED nr/21)
+    // - look up the physical triangle (remap table)
+    // - apply triangle rotation
+    // - look up the physical LED number
+    int virtual_triangle = virt_led_nr/21;
+    int physical_triangle = remap_triangle[virtual_triangle];
+    int virtual_led = virt_led_nr % 21;
+    int physical_led = remap_led[rotate_triangle[virtual_triangle]][virtual_led]-1;
+    int led_nr = physical_triangle * 21 + physical_led;
 
-        uint8_t r,g,b; 
-
-        r = (c->x + 1.0)/2 * 256;
-        g = (c->y + 1.0)/2 * 256;
-        b = (c->z + 1.0)/2 * 256;
-
-        put_pixel(urgb_u32(r,g,b));
-    }
+    return led_nr;
 }
 
-void pattern_gradient_x(float t)
+void pattern_gradient(float t)
 {
     // For each LED:
     // - look up the (x,y,z) coordinates
     // - calculate the value
-    // - determine the virtual triangle number (LED value/21)
-    // - look up the physical triangle (remap table)
-    // - look up the LED number (in case the triangle is rotate)
-    // - Store LED RGB value in array
+    // - Store LED RGB value in physical LED array
     // - When all is done, send array to PIO
 
     uint32_t led_rgb_values[NUM_PIXELS];
@@ -190,49 +187,11 @@ void pattern_gradient_x(float t)
         g = (c->y <= t) ? 255 : 0;
         b = (c->z <= t) ? 255 : 0;
 
-        int virtual_triangle = i/21;
-        int physical_triangle = remap_triangle[virtual_triangle];
-        int virtual_led = i - (virtual_triangle * 21);
-        //int physical_led = remap_led[0][virtual_led]-1;
-        //int physical_led = virtual_led;
-        int physical_led = remap_led[rotate_triangle[virtual_triangle]][virtual_led]-1;
-        int led_nr = physical_triangle * 21 + physical_led;
-        
-        led_rgb_values[led_nr] = urgb_u32(r,g,b);
+        led_rgb_values[calc_phys_led_nr(i)] = urgb_u32(r,g,b);
     }
 
     for(int i = 0; i < NUM_PIXELS; ++i){
         put_pixel(led_rgb_values[i]);
-    }
-}
-
-void pattern_gradient_y(uint len, uint t)
-{
-    for(int i = 0; i < len; ++i){
-        const t_led_coord *c = &led_coords[i];
-
-        uint8_t r,g,b; 
-
-        r = 0;
-        g = (c->y + 1.0)/2 * 256;
-        b = 0;
-
-        put_pixel(urgb_u32(r,g,b));
-    }
-}
-
-void pattern_gradient_z(uint len, uint t)
-{
-    for(int i = 0; i < len; ++i){
-        const t_led_coord *c = &led_coords[i];
-
-        uint8_t r,g,b; 
-
-        r = 0;
-        g = 0;
-        b = (c->z + 1.0)/2 * 256;
-
-        put_pixel(urgb_u32(r,g,b));
     }
 }
 
@@ -286,7 +245,7 @@ const struct {
     pattern pat;
     const char *name;
 } pattern_table[] = {
-        {pattern_gradient,  "Gradient"},
+//        {pattern_gradient,  "Gradient"},
 //        {pattern_one_by_one,  "One by One"},
 //        {pattern_snakes,  "Snakes!"},
 //        {pattern_random,  "Random data"},
@@ -331,7 +290,7 @@ int main() {
 #if 1
     while(1){
         for(float t=-1.05;t<1.05;t+=0.04){
-            pattern_gradient_x(t);
+            pattern_gradient(t);
             //sleep_ms(2); 
         }
     }
