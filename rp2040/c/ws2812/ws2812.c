@@ -6,17 +6,31 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
 #include "ws2812.pio.h"
 
-typedef struct s_led_coord {
+typedef struct s_vec {
     float x;
     float y;
     float z;
-} t_led_coord;
+} t_vec;
+
+typedef struct s_plane {
+    t_vec   point;
+    t_vec   normal;
+} t_plane;
+
+typedef struct s_color {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} t_color;
+
+typedef struct s_vec t_led_coord;
 
 // Maps the triangle order of the FreeCAD model (and thus the LED coordinates)
 // to the way the triangles have been physically wired together.
@@ -73,6 +87,29 @@ int remap_led[3][21] = {
 // default to pin 2 if the board doesn't have a default WS2812 pin defined
 #define WS2812_PIN 0
 #endif
+
+#include "hardware/regs/rosc.h"
+#include "hardware/regs/addressmap.h"
+
+uint32_t rnd(void){
+    int k, random=0;
+    volatile uint32_t *rnd_reg=(uint32_t *)(ROSC_BASE + ROSC_RANDOMBIT_OFFSET);
+    
+    for(k=0;k<32;k++){
+    
+    random = random << 1;
+    random=random + (0x00000001 & (*rnd_reg));
+
+    }
+    return random;
+}
+
+float frnd(float min, float max)
+{
+    float r = ((float)(rnd() & 65535)/65536.0) * (max-min) + min;
+
+    return r;
+}
 
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b) {
     return
@@ -195,6 +232,96 @@ void pattern_gradient(float t)
     }
 }
 
+inline t_vec vec_plus_vec(t_vec v1, t_vec v2)
+{
+    t_vec v;
+
+    v.x = v1.x + v2.x;
+    v.y = v1.y + v2.y;
+    v.z = v1.z + v2.z;
+
+    return v;
+}
+
+inline t_vec vec_sub_vec(t_vec v1, t_vec v2)
+{
+    t_vec v;
+
+    v.x = v1.x - v2.x;
+    v.y = v1.y - v2.y;
+    v.z = v1.z - v2.z;
+
+    return v;
+}
+
+inline float vec_dot_vec(t_vec v1, t_vec v2)
+{
+    float dot;
+
+    dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+
+    return dot;
+}
+
+inline t_vec vec_mul_scalar(t_vec v1, float s)
+{
+    t_vec v;
+
+    v.x = v1.x * s;
+    v.y = v1.y * s;
+    v.z = v1.z * s;
+
+    return v;
+}
+
+inline t_vec vec_normalize(t_vec v)
+{
+    float d = sqrtf(vec_dot_vec(v, v)); 
+    
+    t_vec n = vec_mul_scalar(v, 1/d);
+
+    return n;
+}
+
+float distance_plane_point(t_plane plane, t_vec point)
+{
+    float d;
+
+    d = vec_dot_vec(plane.normal, vec_sub_vec(point, plane.point));
+
+    return d;
+}
+
+void pattern_rings(float offset, float thickness, t_vec start, t_vec dir, t_color col)
+{
+    uint32_t led_rgb_values[NUM_PIXELS];
+
+    for(int i = 0; i < NUM_PIXELS; ++i){
+        led_rgb_values[i] = 0xff;
+    }
+
+    t_plane     plane;
+    plane.point     = vec_plus_vec(start, vec_mul_scalar(dir, offset));
+    plane.normal    = vec_normalize(dir);
+
+    for(int i = 0; i < NUM_PIXELS; ++i){
+        const t_led_coord *pos = &led_coords[i];
+
+        float d = fabsf(distance_plane_point(plane, *pos));
+
+        uint8_t r,g,b; 
+        r = d < thickness ? col.r : 0;
+        g = d < thickness ? col.g : 0;
+        b = d < thickness ? col.b : 0;
+
+        led_rgb_values[calc_phys_led_nr(i)] = urgb_u32(r,g,b);
+    }
+
+    for(int i = 0; i < NUM_PIXELS; ++i){
+        put_pixel(led_rgb_values[i]);
+    }
+}
+
 void pattern_triangle_order(uint len, uint t)
 {
     int tt = remap_triangle[t];
@@ -287,11 +414,74 @@ int main() {
         }
     }
 #endif
-#if 1
+#if 0
     while(1){
         for(float t=-1.05;t<1.05;t+=0.04){
             pattern_gradient(t);
             //sleep_ms(2); 
+        }
+    }
+#endif
+#if 0
+    while(1){
+        {
+            t_vec   start = { -1.0, 0.0, 0.0 };
+            t_vec   dir   = { 1.0, 0.0, 0.0 };
+            t_color color = { 255, 0, 0 };
+    
+            for(float l=0;l<2.05;l+=0.04){
+                pattern_rings(l, 0.05, start, dir, color);
+            }
+        }
+        {
+            t_vec   start = { 0.0, -1.0, 0.0 };
+            t_vec   dir   = { 0.0, 1.0, 0.0 };
+            t_color color = { 0, 255, 0 };
+    
+            for(float l=0;l<2.05;l+=0.04){
+                pattern_rings(l, 0.05, start, dir, color);
+            }
+        }
+        {
+            t_vec   start = { 0.0, 0.0, -1.0 };
+            t_vec   dir   = { 0.0, 0.0, 1.0 };
+            t_color color = { 0, 0, 255 };
+    
+            for(float l=0;l<2.05;l+=0.04){
+                pattern_rings(l, 0.05, start, dir, color);
+            }
+        }
+        {
+            t_vec   start = { -1.0, -1.0, -1.0 };
+            t_vec   dir   = { 1.0, 1.0, 1.0 };
+            t_color color = { 255, 255, 255 };
+    
+            start = vec_normalize(start);
+            dir = vec_normalize(dir);
+            for(float l=0;l<2.05;l+=0.04){
+                pattern_rings(l, 0.05, start, dir, color);
+            }
+        }
+    }
+#endif
+#if 1
+    while(1){
+        {
+            t_vec   start;
+            t_vec   dir;
+            t_color color = { rnd() & 255, rnd() & 255, rnd() & 255 };
+    
+            start.x = frnd(-1.0, 1.0);
+            start.y = frnd(-1.0, 1.0);
+            start.z = frnd(-1.0, 1.0);
+            start = vec_normalize(start);
+            dir = vec_mul_scalar(start, -1.0);
+
+            float speed = frnd(0.06, 0.15);
+
+            for(float l=0;l<2.05;l+=speed){
+                pattern_rings(l, 0.1, start, dir, color);
+            }
         }
     }
 #endif
