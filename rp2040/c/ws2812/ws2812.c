@@ -12,6 +12,14 @@
 #include "hardware/clocks.h"
 #include "ws2812.pio.h"
 
+typedef struct s_led_coord {
+    float x;
+    float y;
+    float z;
+} t_led_coord;
+
+#include "led_coords.h"
+
 #define IS_RGBW false
 #define NUM_PIXELS 420
 
@@ -59,6 +67,16 @@ void pattern_snakes(uint len, uint t) {
     }
 }
 
+void pattern_one_by_one(uint len, uint t) {
+    if (t % 4)
+        return;
+    for (int i = 0; i < len; ++i)
+        if (i < t/4)
+            put_pixel(0xffffff);
+        else
+            put_pixel(0x0);
+}
+
 void pattern_random(uint len, uint t) {
     if (t % 8)
         return;
@@ -87,14 +105,14 @@ const struct {
     pattern pat;
     const char *name;
 } pattern_table[] = {
-        {pattern_snakes,  "Snakes!"},
+//        {pattern_one_by_one,  "One by One"},
+//        {pattern_snakes,  "Snakes!"},
         {pattern_random,  "Random data"},
-        {pattern_sparkle, "Sparkles"},
-        {pattern_greys,   "Greys"},
+//        {pattern_sparkle, "Sparkles"},
+//        {pattern_greys,   "Greys"},
 };
 
 int main() {
-    //set_sys_clock_48();
     stdio_init_all();
     printf("WS2812 Smoke Test, using pin %d", WS2812_PIN);
 
@@ -107,6 +125,7 @@ int main() {
 
     int t = 0;
     while (1) {
+#if 1
         int pat = rand() % count_of(pattern_table);
         int dir = (rand() >> 30) & 1 ? 1 : -1;
         puts(pattern_table[pat].name);
@@ -116,5 +135,12 @@ int main() {
             sleep_ms(10);
             t += dir;
         }
+#endif
+#if 0
+        for(int i=0; i<NUM_PIXELS*4;++i){
+            pattern_one_by_one(NUM_PIXELS, i);
+            sleep_ms(10);
+        }
+#endif
     }
 }
