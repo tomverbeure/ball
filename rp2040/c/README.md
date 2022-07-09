@@ -69,3 +69,6 @@ pico_add_extra_outputs(pio_ws2812)
     You will need to rerun `cmake ..` in the `./build` directory and recompile.
     
     After that, you can connect to the serial USB port with `screen /dev/ttyACM0`.
+    Exit screen with CTRL-A K.  
+
+

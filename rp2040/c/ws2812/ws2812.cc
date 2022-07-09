@@ -10,8 +10,12 @@
 
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
+#include "hardware/i2c.h"
 #include "hardware/clocks.h"
 #include "ws2812.pio.h"
+
+#define IS_RGBW false
+#define NUM_PIXELS 420
 
 typedef struct s_vec {
     float x;
@@ -29,6 +33,11 @@ typedef struct s_color {
     uint8_t g;
     uint8_t b;
 } t_color;
+
+const t_color black = { 0,0,0 };
+const t_color red   = { 255,0,0 };
+const t_color green = { 0,255,0 };
+const t_color blue  = { 0,0,255 };
 
 typedef struct s_vec t_led_coord;
 
@@ -118,6 +127,19 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b) {
              (uint32_t) (b);
 }
 
+
+inline void put_pixel(t_color &c)
+{
+    const uint8_t max_val = 25;
+
+    uint8_t r = (uint16_t)c.r * max_val / 256;
+    uint8_t g = (uint16_t)c.g * max_val / 256;
+    uint8_t b = (uint16_t)c.b * max_val / 256;
+
+    uint32_t pixel_rgb = urgb_u32(r,g,b);
+    pio_sm_put_blocking(pio0, 0, pixel_rgb << 8u);
+}
+
 static inline void put_pixel(uint32_t pixel_rgb) {
     uint32_t r = (pixel_rgb >> 16) & 255;
     uint32_t g = (pixel_rgb >> 8)  & 255;
@@ -132,6 +154,19 @@ static inline void put_pixel(uint32_t pixel_rgb) {
     pixel_rgb = urgb_u32(r,g,b);
 
     pio_sm_put_blocking(pio0, 0, pixel_rgb << 8u);
+}
+
+void send_buffer(t_color led_buffer[NUM_PIXELS])
+{
+    for(int i=0; i<NUM_PIXELS;++i){
+        put_pixel(led_buffer[i]);
+    }   
+}
+
+void pattern_fixed_color(t_color led_buffer[NUM_PIXELS], const t_color &c) {
+    for(int i=0;i<NUM_PIXELS;++i){
+        led_buffer[i] = c;
+    }
 }
 
 void pattern_snakes(uint len, uint t) {
@@ -292,13 +327,14 @@ float distance_plane_point(t_plane plane, t_vec point)
     return d;
 }
 
-void pattern_rings(float offset, float thickness, t_vec start, t_vec dir, t_color col)
+void pattern_rings(t_color led_buffer[NUM_PIXELS], float offset, float thickness, t_vec start, t_vec dir, t_color col)
 {
-    uint32_t led_rgb_values[NUM_PIXELS];
-
+#if 0
+    // For debug only...
     for(int i = 0; i < NUM_PIXELS; ++i){
-        led_rgb_values[i] = 0xff;
+        led_buffer[i] = blue;
     }
+#endif
 
     t_plane     plane;
     plane.point     = vec_plus_vec(start, vec_mul_scalar(dir, offset));
@@ -309,16 +345,9 @@ void pattern_rings(float offset, float thickness, t_vec start, t_vec dir, t_colo
 
         float d = fabsf(distance_plane_point(plane, *pos));
 
-        uint8_t r,g,b; 
-        r = d < thickness ? col.r : 0;
-        g = d < thickness ? col.g : 0;
-        b = d < thickness ? col.b : 0;
+        t_color c = d < thickness ? col : black;
 
-        led_rgb_values[calc_phys_led_nr(i)] = urgb_u32(r,g,b);
-    }
-
-    for(int i = 0; i < NUM_PIXELS; ++i){
-        put_pixel(led_rgb_values[i]);
+        led_buffer[calc_phys_led_nr(i)] = c;
     }
 }
 
@@ -380,18 +409,78 @@ const struct {
 //        {pattern_greys,   "Greys"},
 };
 
+int reg_read(  i2c_inst_t *i2c,
+                const uint addr,
+                const uint8_t reg,
+                uint8_t *buf,
+                const uint8_t nbytes) {
+
+    int num_bytes_read = 0;
+
+    // Check to make sure caller is asking for 1 or more bytes
+    if (nbytes < 1) {
+        return 0;
+    }
+
+    // Read data from register(s) over I2C
+    i2c_write_blocking(i2c, addr, &reg, 1, true);
+    num_bytes_read = i2c_read_blocking(i2c, addr, buf, nbytes, false);
+
+    return num_bytes_read;
+}
+
 int main() {
     stdio_init_all();
     printf("WS2812 Smoke Test, using pin %d", WS2812_PIN);
 
-    // todo get free sm
+    // Config WS2812 PIO
     PIO pio = pio0;
     int sm = 0;
     uint offset = pio_add_program(pio, &ws2812_program);
 
     ws2812_program_init(pio, sm, offset, WS2812_PIN, 800000, IS_RGBW);
 
+    // Config I2C port
+    const uint sda_pin = 20; 
+    const uint scl_pin = 21; 
+
+    i2c_inst_t *i2c = i2c0;
+    i2c_init(i2c, 400 * 1000);
+    gpio_set_function(sda_pin, GPIO_FUNC_I2C);
+    gpio_set_function(scl_pin, GPIO_FUNC_I2C);
+
     int t = 0;
+
+    t_color led_buffer[NUM_PIXELS];
+
+
+    // Cleanup lingering colors...
+    pattern_fixed_color(led_buffer, black);
+    send_buffer(led_buffer);
+
+    // Ring back and forth for each axis.
+    {
+        t_vec starts[6] = { 
+                { -1.0,  0.0,  0.0 },
+                {  1.0,  0.0,  0.0 },
+                {  0.0, -1.0,  0.0 },
+                {  0.0,  1.0,  0.0 },
+                {  0.0,  0.0, -1.0 },
+                {  0.0,  0.0,  1.0 } };
+        t_color cols[6] = { red, red, green, green, blue, blue };
+
+        for(int i=0;i<6;++i){
+            t_vec start = starts[i];
+            t_vec dir = vec_mul_scalar(start, -1);
+            float thickness = 0.05;
+        
+            for(float l=-thickness;l<2+thickness;l+=0.04){
+                pattern_rings(led_buffer, l, thickness, start, dir, cols[i]);
+                send_buffer(led_buffer);
+            }
+        }
+    }
+
 #if 0
     while (1) {
         int pat = rand() % count_of(pattern_table);
@@ -422,51 +511,10 @@ int main() {
         }
     }
 #endif
-#if 0
-    while(1){
-        {
-            t_vec   start = { -1.0, 0.0, 0.0 };
-            t_vec   dir   = { 1.0, 0.0, 0.0 };
-            t_color color = { 255, 0, 0 };
-    
-            for(float l=0;l<2.05;l+=0.04){
-                pattern_rings(l, 0.05, start, dir, color);
-            }
-        }
-        {
-            t_vec   start = { 0.0, -1.0, 0.0 };
-            t_vec   dir   = { 0.0, 1.0, 0.0 };
-            t_color color = { 0, 255, 0 };
-    
-            for(float l=0;l<2.05;l+=0.04){
-                pattern_rings(l, 0.05, start, dir, color);
-            }
-        }
-        {
-            t_vec   start = { 0.0, 0.0, -1.0 };
-            t_vec   dir   = { 0.0, 0.0, 1.0 };
-            t_color color = { 0, 0, 255 };
-    
-            for(float l=0;l<2.05;l+=0.04){
-                pattern_rings(l, 0.05, start, dir, color);
-            }
-        }
-        {
-            t_vec   start = { -1.0, -1.0, -1.0 };
-            t_vec   dir   = { 1.0, 1.0, 1.0 };
-            t_color color = { 255, 255, 255 };
-    
-            start = vec_normalize(start);
-            dir = vec_normalize(dir);
-            for(float l=0;l<2.05;l+=0.04){
-                pattern_rings(l, 0.05, start, dir, color);
-            }
-        }
-    }
-#endif
 #if 1
     while(1){
         {
+            printf("*");
             t_vec   start;
             t_vec   dir;
             t_color color = { (uint8_t)rnd(), (uint8_t)rnd(), (uint8_t)rnd() };
@@ -481,7 +529,8 @@ int main() {
             float speed = frnd(0.06, 0.15);
 
             for(float l=-thickness;l<2+thickness;l+=speed){
-                pattern_rings(l, thickness, start, dir, color);
+                pattern_rings(led_buffer, l, thickness, start, dir, color);
+                send_buffer(led_buffer);
             }
         }
     }

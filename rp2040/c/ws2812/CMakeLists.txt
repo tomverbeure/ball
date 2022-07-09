@@ -5,9 +5,10 @@ pico_generate_pio_header(pio_ws2812 ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio OUTPUT_
 
 target_sources(pio_ws2812 PRIVATE ws2812.cc)
 
-target_link_libraries(pio_ws2812 PRIVATE pico_stdlib hardware_pio)
+target_link_libraries(pio_ws2812 PRIVATE pico_stdlib hardware_pio hardware_i2c)
 pico_add_extra_outputs(pio_ws2812)
 pico_enable_stdio_usb(pio_ws2812 1)
+pico_enable_stdio_uart(pio_ws2812 0)
 
 # add url via pico_set_program_url
 example_auto_set_url(pio_ws2812)
