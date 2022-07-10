@@ -467,7 +467,6 @@ int main() {
 
     t_color led_buffer[NUM_PIXELS];
 
-
     // Cleanup lingering colors...
     pattern_fixed_color(led_buffer, black);
     send_buffer(led_buffer);
@@ -541,12 +540,15 @@ int main() {
             start.z = frnd(-1.0, 1.0);
             start = vec_normalize(start);
             dir = vec_mul_scalar(start, -1.0);
-            float thickness = frnd(0.1, 1.2);
+            float ring_thickness = frnd(0.1, 1.0);
+            float spacing_thickness = frnd(0.3, 0.5);
+            int nr_rings = (rnd() % 2)+1;
+            float total_thickness = (nr_rings * ring_thickness) + ((nr_rings-1) * spacing_thickness);
 
             float speed = frnd(0.06, 0.15);
 
-            for(float l=-thickness;l<2;l+=speed){
-                pattern_rings(led_buffer, l, thickness, start, dir, color);
+            for(float l=-total_thickness;l<2;l+=speed){
+                pattern_rings(led_buffer, l, ring_thickness, start, dir, color, nr_rings, spacing_thickness);
                 send_buffer(led_buffer);
             }
         }
