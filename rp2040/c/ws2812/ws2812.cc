@@ -327,7 +327,15 @@ float distance_plane_point(t_plane plane, t_vec point)
     return d;
 }
 
-void pattern_rings(t_color led_buffer[NUM_PIXELS], float offset, float thickness, t_vec start, t_vec dir, t_color col)
+void pattern_rings(
+            t_color led_buffer[NUM_PIXELS], 
+            float offset, 
+            float ring_thickness, 
+            t_vec start, 
+            t_vec dir, 
+            t_color col, 
+            int nr_rings=1,
+            float spacing_thickness=0.0)
 {
 #if 0
     // For debug only...
@@ -343,9 +351,17 @@ void pattern_rings(t_color led_buffer[NUM_PIXELS], float offset, float thickness
     for(int i = 0; i < NUM_PIXELS; ++i){
         const t_led_coord *pos = &led_coords[i];
 
-        float d = fabsf(distance_plane_point(plane, *pos));
-
-        t_color c = d < thickness ? col : black;
+        float d = distance_plane_point(plane, *pos);
+        float total_thickness = ring_thickness + spacing_thickness;
+        float segment = floorf(d/total_thickness);
+        t_color c;
+        if (d<0 || segment >= nr_rings){
+            c = black;
+        }
+        else{
+            d = d - segment * total_thickness;
+            c = d < ring_thickness ? col : black;
+        }
 
         led_buffer[calc_phys_led_nr(i)] = c;
     }
@@ -472,10 +488,13 @@ int main() {
         for(int i=0;i<6;++i){
             t_vec start = starts[i];
             t_vec dir = vec_mul_scalar(start, -1);
-            float thickness = 0.05;
+            int   nr_rings      = 10;
+            float ring_thickness = 0.2;
+            float spacing_thickness = 0.4;
+            float total_thickness = (nr_rings * ring_thickness) + ((nr_rings-1) * spacing_thickness);
         
-            for(float l=-thickness;l<2+thickness;l+=0.04){
-                pattern_rings(led_buffer, l, thickness, start, dir, cols[i]);
+            for(float l=-total_thickness;l<2;l+=0.04){
+                pattern_rings(led_buffer, l, ring_thickness, start, dir, cols[i], nr_rings, spacing_thickness);
                 send_buffer(led_buffer);
             }
         }
@@ -524,11 +543,11 @@ int main() {
             start.z = frnd(-1.0, 1.0);
             start = vec_normalize(start);
             dir = vec_mul_scalar(start, -1.0);
-            float thickness = frnd(0.05, 0.6);
+            float thickness = frnd(0.1, 1.2);
 
             float speed = frnd(0.06, 0.15);
 
-            for(float l=-thickness;l<2+thickness;l+=speed){
+            for(float l=-thickness;l<2;l+=speed){
                 pattern_rings(led_buffer, l, thickness, start, dir, color);
                 send_buffer(led_buffer);
             }
