@@ -13,7 +13,7 @@ class Particles
     uint8_t cur_values[NUM_PIXELS];
 
     void init();
-    int calc_next_frame(int dir);
+    int calc_next_frame(t_vec gravity);
     void render(t_color led_buffer[NUM_PIXELS]);
 };
 

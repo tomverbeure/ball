@@ -19,11 +19,8 @@ void Particles::init()
     }
 }
 
-int Particles::calc_next_frame(int dir)
+int Particles::calc_next_frame(t_vec gravity)
 {
-    // Find LED that is at the bottom.
-    float min_z=-100.0;
-    int min_z_idx=-1;
 
     for(int cur_led_idx=0;cur_led_idx<NUM_PIXELS;++cur_led_idx){
         const t_vec &cur_led = led_coords[cur_led_idx];
@@ -43,12 +40,11 @@ int Particles::calc_next_frame(int dir)
 
             const t_vec &cl_led = led_coords[cl_led_idx];
 
-            if ((dir == -1 && cl_led.z <= cur_led.z) || (dir == 1 && cl_led.z >= cur_led.z)){
+            t_vec diff = vec_sub_vec(cl_led, cur_led);
+            float chance = vec_dot_vec(diff, gravity);
+
+            if (chance >= 0.0){
                 ++num_candidates;
-                t_vec z_down = {0,0,-1.0};
-                t_vec z_up = {0,0,1.0};
-                t_vec diff = vec_sub_vec(cl_led, cur_led);
-                float chance = vec_dot_vec(diff, dir == -1 ? z_down : z_up);
                 chances[i] = chance;
                 cumul_chance += chance;
             }

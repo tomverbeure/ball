@@ -373,11 +373,12 @@ int main() {
 #if 1
     Particles p;
 
-    int dir = -1;
-
     p.init();
     p.render(led_buffer);
     send_buffer(led_buffer);
+
+    t_vec dir = { -1.0, -0.5, -0.5 };
+    dir = vec_normalize(dir);
 
     while(1){
         sleep_ms(1000);
@@ -387,7 +388,7 @@ int main() {
             send_buffer(led_buffer);
             sleep_ms(1);
         }
-        dir = dir == -1 ? 1 : -1;
+        dir = vec_mul_scalar(dir,-1.0);
     }
 #endif
 
