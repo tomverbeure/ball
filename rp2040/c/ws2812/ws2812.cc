@@ -10,6 +10,7 @@
 
 #include "general.h"
 #include "lib.h"
+#include "mpu6050_drv.h"
 
 #include "particles.h"
 
@@ -325,14 +326,8 @@ int main() {
 
     ws2812_program_init(pio, sm, offset, WS2812_PIN, 800000, IS_RGBW);
 
-    // Config I2C port
-    const uint sda_pin = 20; 
-    const uint scl_pin = 21; 
-
-    i2c_inst_t *i2c = i2c0;
-    i2c_init(i2c, 400 * 1000);
-    gpio_set_function(sda_pin, GPIO_FUNC_I2C);
-    gpio_set_function(scl_pin, GPIO_FUNC_I2C);
+    mpu6050_init();
+    mpu6050_gravity();
 
     int t = 0;
 
@@ -377,18 +372,18 @@ int main() {
     p.render(led_buffer);
     send_buffer(led_buffer);
 
-    t_vec dir = { -1.0, -0.5, -0.5 };
-    dir = vec_normalize(dir);
+    //t_vec dir = { -1.0, -0.5, -0.5 };
+    t_vec dir = mpu6050_gravity();
 
     while(1){
-        sleep_ms(1000);
+        //sleep_ms(1000);
         for(int i=0;i<50;++i){
+            dir = mpu6050_gravity();
+            dir = vec_mul_scalar(dir, -1.0);
             p.calc_next_frame(dir);
             p.render(led_buffer);
             send_buffer(led_buffer);
-            sleep_ms(1);
         }
-        dir = vec_mul_scalar(dir,-1.0);
     }
 #endif
 
@@ -425,7 +420,6 @@ int main() {
 #if 1
     while(1){
         {
-            printf("*");
             t_vec   start;
             t_vec   dir;
             t_color color = { (uint8_t)rnd(), (uint8_t)rnd(), (uint8_t)rnd() };

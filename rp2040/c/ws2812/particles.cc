@@ -52,6 +52,8 @@ int Particles::calc_next_frame(t_vec gravity)
 
         // Select weighed random LED out of those that are below:
         if (num_candidates > 0){
+            if (rnd_whitened(3))
+                continue;
             float sel = frnd(0.0, cumul_chance);
             for(int i=0;i<6;++i){
                 if (sel < chances[i]){
