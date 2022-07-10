@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -14,42 +8,33 @@
 #include "hardware/clocks.h"
 #include "ws2812.pio.h"
 
+#include "general.h"
+#include "lib.h"
+
+#include "particles.h"
+
 #define IS_RGBW false
-#define NUM_PIXELS 420
 
 const int max_value = 30;
 
-typedef struct s_vec {
-    float x;
-    float y;
-    float z;
-} t_vec;
+const t_color black   = { 0,0,0 };
+const t_color white   = { 255,255,255 };
+const t_color red     = { 255,0,0 };
+const t_color green   = { 0,255,0 };
+const t_color blue    = { 0,0,255 };
+const t_color cyan    = { 0,255,255 };
+const t_color yellow  = { 255,255,255 };
+const t_color orange  = { 255,165,0 };
+const t_color purple  = { 0xa0,0x20,0xf0 };
 
-typedef struct s_plane {
-    t_vec   point;
-    t_vec   normal;
-} t_plane;
-
-typedef struct s_color {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-} t_color;
-
-const t_color black = { 0,0,0 };
-const t_color red   = { 255,0,0 };
-const t_color green = { 0,255,0 };
-const t_color blue  = { 0,0,255 };
-
-typedef struct s_vec t_led_coord;
 
 // Maps the triangle order of the FreeCAD model (and thus the LED coordinates)
 // to the way the triangles have been physically wired together.
-int remap_triangle[20] = {
+const int8_t remap_triangle[20] = {
     5, 6, 7, 8, 9,  0, 4, 3, 2, 1, 10, 11, 12, 13, 14,  16, 15, 19, 18, 17
 };
 
-int rotate_triangle[20] = { 
+const int8_t rotate_triangle[20] = { 
     0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  2, 2, 2, 2, 1,  1, 1, 1, 1, 1
 };
 
@@ -57,7 +42,7 @@ int rotate_triangle[20] = {
 // going from center to outside. So remap them from scan order to
 // PCB order. The numbers are the LED numbers on the PCB, so it
 // starts with 1!
-int remap_led[3][21] = {
+const int8_t remap_led[3][21] = {
     // LED 2 on top
     { 
     15, 16, 17, 18, 19, 20, 
@@ -99,46 +84,7 @@ int remap_led[3][21] = {
 #define WS2812_PIN 0
 #endif
 
-#include "hardware/regs/rosc.h"
-#include "hardware/regs/addressmap.h"
 
-uint32_t rnd(void){
-    int k, random=0;
-    volatile uint32_t *rnd_reg=(uint32_t *)(ROSC_BASE + ROSC_RANDOMBIT_OFFSET);
-    
-    for(k=0;k<32;k++){
-    
-    random = random << 1;
-    random=random + (0x00000001 & (*rnd_reg));
-
-    }
-    return random;
-}
-
-float frnd(float min, float max)
-{
-    float r = ((float)(rnd() & 65535)/65536.0) * (max-min) + min;
-
-    return r;
-}
-
-static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b) {
-    return
-            ((uint32_t) (r) << 16) |
-            ((uint32_t) (g) << 8) |
-             (uint32_t) (b);
-}
-
-
-inline void put_pixel(t_color &c)
-{
-    uint8_t r = (uint16_t)c.r * max_value / 256;
-    uint8_t g = (uint16_t)c.g * max_value / 256;
-    uint8_t b = (uint16_t)c.b * max_value / 256;
-
-    uint32_t pixel_rgb = urgb_u32(r,g,b);
-    pio_sm_put_blocking(pio0, 0, pixel_rgb << 8u);
-}
 
 static inline void put_pixel(uint32_t pixel_rgb) {
     uint32_t r = (pixel_rgb >> 16) & 255;
@@ -214,21 +160,6 @@ void pattern_greys(uint len, uint t) {
     }
 }
 
-int calc_phys_led_nr(int virt_led_nr)
-{
-    // - determine the virtual triangle number (LED nr/21)
-    // - look up the physical triangle (remap table)
-    // - apply triangle rotation
-    // - look up the physical LED number
-    int virtual_triangle = virt_led_nr/21;
-    int physical_triangle = remap_triangle[virtual_triangle];
-    int virtual_led = virt_led_nr % 21;
-    int physical_led = remap_led[rotate_triangle[virtual_triangle]][virtual_led]-1;
-    int led_nr = physical_triangle * 21 + physical_led;
-
-    return led_nr;
-}
-
 void pattern_gradient(float t)
 {
     // For each LED:
@@ -263,66 +194,6 @@ void pattern_gradient(float t)
     for(int i = 0; i < NUM_PIXELS; ++i){
         put_pixel(led_rgb_values[i]);
     }
-}
-
-inline t_vec vec_plus_vec(t_vec v1, t_vec v2)
-{
-    t_vec v;
-
-    v.x = v1.x + v2.x;
-    v.y = v1.y + v2.y;
-    v.z = v1.z + v2.z;
-
-    return v;
-}
-
-inline t_vec vec_sub_vec(t_vec v1, t_vec v2)
-{
-    t_vec v;
-
-    v.x = v1.x - v2.x;
-    v.y = v1.y - v2.y;
-    v.z = v1.z - v2.z;
-
-    return v;
-}
-
-inline float vec_dot_vec(t_vec v1, t_vec v2)
-{
-    float dot;
-
-    dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-
-    return dot;
-}
-
-inline t_vec vec_mul_scalar(t_vec v1, float s)
-{
-    t_vec v;
-
-    v.x = v1.x * s;
-    v.y = v1.y * s;
-    v.z = v1.z * s;
-
-    return v;
-}
-
-inline t_vec vec_normalize(t_vec v)
-{
-    float d = sqrtf(vec_dot_vec(v, v)); 
-    
-    t_vec n = vec_mul_scalar(v, 1/d);
-
-    return n;
-}
-
-float distance_plane_point(t_plane plane, t_vec point)
-{
-    float d;
-
-    d = vec_dot_vec(plane.normal, vec_sub_vec(point, plane.point));
-
-    return d;
 }
 
 void pattern_rings(
@@ -471,6 +342,7 @@ int main() {
     pattern_fixed_color(led_buffer, black);
     send_buffer(led_buffer);
 
+#if 0
     // Ring back and forth for each axis.
     {
         t_vec starts[6] = { 
@@ -490,12 +362,34 @@ int main() {
             float spacing_thickness = 0.4;
             float total_thickness = (nr_rings * ring_thickness) + ((nr_rings-1) * spacing_thickness);
         
-            for(float l=-total_thickness;l<2;l+=0.05){
+            for(float l=-total_thickness;l<2;l+=0.08){
                 pattern_rings(led_buffer, l, ring_thickness, start, dir, cols[i], nr_rings, spacing_thickness);
                 send_buffer(led_buffer);
             }
         }
     }
+#endif
+
+#if 1
+    Particles p;
+
+    int dir = -1;
+
+    p.init();
+    p.render(led_buffer);
+    send_buffer(led_buffer);
+
+    while(1){
+        sleep_ms(1000);
+        for(int i=0;i<50;++i){
+            p.calc_next_frame(dir);
+            p.render(led_buffer);
+            send_buffer(led_buffer);
+            sleep_ms(1);
+        }
+        dir = dir == -1 ? 1 : -1;
+    }
+#endif
 
 #if 0
     while (1) {
