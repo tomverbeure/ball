@@ -17,6 +17,8 @@
 #define IS_RGBW false
 #define NUM_PIXELS 420
 
+const int max_value = 30;
+
 typedef struct s_vec {
     float x;
     float y;
@@ -130,11 +132,9 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b) {
 
 inline void put_pixel(t_color &c)
 {
-    const uint8_t max_val = 25;
-
-    uint8_t r = (uint16_t)c.r * max_val / 256;
-    uint8_t g = (uint16_t)c.g * max_val / 256;
-    uint8_t b = (uint16_t)c.b * max_val / 256;
+    uint8_t r = (uint16_t)c.r * max_value / 256;
+    uint8_t g = (uint16_t)c.g * max_value / 256;
+    uint8_t b = (uint16_t)c.b * max_value / 256;
 
     uint32_t pixel_rgb = urgb_u32(r,g,b);
     pio_sm_put_blocking(pio0, 0, pixel_rgb << 8u);
@@ -145,11 +145,9 @@ static inline void put_pixel(uint32_t pixel_rgb) {
     uint32_t g = (pixel_rgb >> 8)  & 255;
     uint32_t b =  pixel_rgb        & 255;
 
-    const uint32_t max_val = 25;
-
-    r = (r * max_val) / 256;
-    g = (g * max_val) / 256;
-    b = (b * max_val) / 256;
+    r = (r * max_value) / 256;
+    g = (g * max_value) / 256;
+    b = (b * max_value) / 256;
 
     pixel_rgb = urgb_u32(r,g,b);
 
@@ -488,12 +486,12 @@ int main() {
         for(int i=0;i<6;++i){
             t_vec start = starts[i];
             t_vec dir = vec_mul_scalar(start, -1);
-            int   nr_rings      = 10;
-            float ring_thickness = 0.2;
+            int   nr_rings      = 3;
+            float ring_thickness = 0.15;
             float spacing_thickness = 0.4;
             float total_thickness = (nr_rings * ring_thickness) + ((nr_rings-1) * spacing_thickness);
         
-            for(float l=-total_thickness;l<2;l+=0.04){
+            for(float l=-total_thickness;l<2;l+=0.05){
                 pattern_rings(led_buffer, l, ring_thickness, start, dir, cols[i], nr_rings, spacing_thickness);
                 send_buffer(led_buffer);
             }
