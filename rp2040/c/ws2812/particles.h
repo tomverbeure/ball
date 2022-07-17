@@ -5,8 +5,9 @@
 #include <stdlib.h>
 
 #include "general.h"
+#include "pattern.h"
 
-class Particles
+class Particles : public Pattern
 {
     public:
 

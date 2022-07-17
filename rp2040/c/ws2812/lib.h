@@ -81,6 +81,7 @@ inline void put_pixel(const t_color &c)
     pio_sm_put_blocking(pio0, 0, pixel_rgb << 8u);
 }
 
+void init_remap();
 int calc_phys_led_nr(int virt_led_nr);
 
 #endif

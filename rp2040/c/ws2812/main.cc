@@ -13,6 +13,9 @@
 #include "mpu6050_drv.h"
 
 #include "particles.h"
+#include "rings.h"
+#include "random_rings.h"
+#include "startup_rings.h"
 
 #define IS_RGBW false
 
@@ -43,7 +46,7 @@ const int8_t rotate_triangle[20] = {
 // going from center to outside. So remap them from scan order to
 // PCB order. The numbers are the LED numbers on the PCB, so it
 // starts with 1!
-const int8_t remap_led[3][21] = {
+const int8_t remap_triangle_led[3][21] = {
     // LED 2 on top
     { 
     15, 16, 17, 18, 19, 20, 
@@ -73,6 +76,13 @@ const int8_t remap_led[3][21] = {
     }
 };
 
+// Lookup table that maps the location of all physical LEDs to its
+// virtual location in the chain.
+// This table is necessary if we want to send the LEDs in 
+// physical order to the chain while doing a lookup in the virtual
+// buffer.
+int16_t remap_led_phys_to_virt[NUM_PIXELS];
+
 #include "led_coords.h"
 
 #define IS_RGBW false
@@ -84,7 +94,6 @@ const int8_t remap_led[3][21] = {
 // default to pin 2 if the board doesn't have a default WS2812 pin defined
 #define WS2812_PIN 0
 #endif
-
 
 
 static inline void put_pixel(uint32_t pixel_rgb) {
@@ -105,6 +114,13 @@ void send_buffer(t_color led_buffer[NUM_PIXELS])
 {
     for(int i=0; i<NUM_PIXELS;++i){
         put_pixel(led_buffer[i]);
+    }   
+}
+
+void send_virtual_buffer(t_color led_buffer[NUM_PIXELS])
+{
+    for(int i=0; i<NUM_PIXELS;++i){
+        put_pixel(led_buffer[remap_led_phys_to_virt[i]]);
     }   
 }
 
@@ -197,49 +213,9 @@ void pattern_gradient(float t)
     }
 }
 
-void pattern_rings(
-            t_color led_buffer[NUM_PIXELS], 
-            float offset, 
-            float ring_thickness, 
-            t_vec start, 
-            t_vec dir, 
-            t_color col, 
-            int nr_rings=1,
-            float spacing_thickness=0.0)
-{
-#if 0
-    // For debug only...
-    for(int i = 0; i < NUM_PIXELS; ++i){
-        led_buffer[i] = blue;
-    }
-#endif
-
-    t_plane     plane;
-    plane.point     = vec_plus_vec(start, vec_mul_scalar(dir, offset));
-    plane.normal    = vec_normalize(dir);
-
-    for(int i = 0; i < NUM_PIXELS; ++i){
-        const t_led_coord *pos = &led_coords[i];
-
-        float d = distance_plane_point(plane, *pos);
-        float total_thickness = ring_thickness + spacing_thickness;
-        float segment = floorf(d/total_thickness);
-        t_color c;
-        if (d<0 || segment >= nr_rings){
-            c = black;
-        }
-        else{
-            d = d - segment * total_thickness;
-            c = d < ring_thickness ? col : black;
-        }
-
-        led_buffer[calc_phys_led_nr(i)] = c;
-    }
-}
-
 void pattern_triangle_order(uint len, uint t)
 {
-    int tt = remap_triangle[t];
+    int8_t tt = remap_triangle[t];
 
     for(int i = 0; i < len; ++i){
         int ct = i/21;          // current triangle
@@ -319,6 +295,8 @@ int main() {
     stdio_init_all();
     printf("WS2812 Smoke Test, using pin %d", WS2812_PIN);
 
+    init_remap();
+
     // Config WS2812 PIO
     PIO pio = pio0;
     int sm = 0;
@@ -337,35 +315,39 @@ int main() {
     pattern_fixed_color(led_buffer, black);
     send_buffer(led_buffer);
 
-#if 0
+#if 1
     // Ring back and forth for each axis.
     {
-        t_vec starts[6] = { 
-                { -1.0,  0.0,  0.0 },
-                {  1.0,  0.0,  0.0 },
-                {  0.0, -1.0,  0.0 },
-                {  0.0,  1.0,  0.0 },
-                {  0.0,  0.0, -1.0 },
-                {  0.0,  0.0,  1.0 } };
-        t_color cols[6] = { red, red, green, green, blue, blue };
+        StartupRings startup_rings;
+        startup_rings.init();
 
-        for(int i=0;i<6;++i){
-            t_vec start = starts[i];
-            t_vec dir = vec_mul_scalar(start, -1);
-            int   nr_rings      = 3;
-            float ring_thickness = 0.15;
-            float spacing_thickness = 0.4;
-            float total_thickness = (nr_rings * ring_thickness) + ((nr_rings-1) * spacing_thickness);
-        
-            for(float l=-total_thickness;l<2;l+=0.08){
-                pattern_rings(led_buffer, l, ring_thickness, start, dir, cols[i], nr_rings, spacing_thickness);
-                send_buffer(led_buffer);
-            }
-        }
+        bool done;
+        do {
+            done = startup_rings.calc_next_frame();
+            startup_rings.render(led_buffer);
+            send_virtual_buffer(led_buffer);
+        } while(!done);
     }
 #endif
 
 #if 1
+    RandomRings random_rings;
+    while(1){
+        {
+            random_rings.init();
+
+            bool done;
+            do {
+                done = random_rings.calc_next_frame();
+                random_rings.render(led_buffer);
+                send_virtual_buffer(led_buffer);
+            } while(!done);
+        }
+    }
+#endif
+
+
+#if 0
     Particles p;
 
     p.init();
@@ -414,32 +396,6 @@ int main() {
         for(float t=-1.05;t<1.05;t+=0.04){
             pattern_gradient(t);
             //sleep_ms(2); 
-        }
-    }
-#endif
-#if 1
-    while(1){
-        {
-            t_vec   start;
-            t_vec   dir;
-            t_color color = { (uint8_t)rnd(), (uint8_t)rnd(), (uint8_t)rnd() };
-    
-            start.x = frnd(-1.0, 1.0);
-            start.y = frnd(-1.0, 1.0);
-            start.z = frnd(-1.0, 1.0);
-            start = vec_normalize(start);
-            dir = vec_mul_scalar(start, -1.0);
-            float ring_thickness = frnd(0.1, 1.0);
-            float spacing_thickness = frnd(0.3, 0.5);
-            int nr_rings = (rnd() % 2)+1;
-            float total_thickness = (nr_rings * ring_thickness) + ((nr_rings-1) * spacing_thickness);
-
-            float speed = frnd(0.06, 0.15);
-
-            for(float l=-total_thickness;l<2;l+=speed){
-                pattern_rings(led_buffer, l, ring_thickness, start, dir, color, nr_rings, spacing_thickness);
-                send_buffer(led_buffer);
-            }
         }
     }
 #endif

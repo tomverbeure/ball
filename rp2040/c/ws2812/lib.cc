@@ -49,6 +49,15 @@ float distance_plane_point(t_plane plane, t_vec point)
     return d;
 }
 
+void init_remap()
+{
+    for(int virt = 0; virt < NUM_PIXELS; ++virt){
+        int phys = calc_phys_led_nr(virt);
+        remap_led_phys_to_virt[phys] = virt;
+    }
+}
+
+
 int calc_phys_led_nr(int virt_led_nr)
 {
     // - determine the virtual triangle number (LED nr/21)
@@ -58,7 +67,7 @@ int calc_phys_led_nr(int virt_led_nr)
     int virtual_triangle = virt_led_nr/21;
     int physical_triangle = remap_triangle[virtual_triangle];
     int virtual_led = virt_led_nr % 21;
-    int physical_led = remap_led[rotate_triangle[virtual_triangle]][virtual_led]-1;
+    int physical_led = remap_triangle_led[rotate_triangle[virtual_triangle]][virtual_led]-1;
     int led_nr = physical_triangle * 21 + physical_led;
 
     return led_nr;

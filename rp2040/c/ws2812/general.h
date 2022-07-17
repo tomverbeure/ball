@@ -26,7 +26,8 @@ extern const t_vec led_coords[420];
 extern const uint16_t closest_leds[420][6];
 extern const int8_t remap_triangle[20];
 extern const int8_t rotate_triangle[20];
-extern const int8_t remap_led[3][21];
+extern const int8_t remap_triangle_led[3][21];
+extern int16_t remap_led_phys_to_virt[NUM_PIXELS];
 
 extern const t_color black; 
 extern const t_color white;
