@@ -17,6 +17,8 @@
 #include "random_rings.h"
 #include "startup_rings.h"
 #include "pride_flag.h"
+#include "sparkles.h"
+#include "rgb_sphere.h"
 
 #define IS_RGBW false
 
@@ -162,13 +164,6 @@ void pattern_random(uint len, uint t) {
         put_pixel(rand());
 }
 
-void pattern_sparkle(uint len, uint t) {
-    if (t % 8)
-        return;
-    for (int i = 0; i < len; ++i)
-        put_pixel(rand() % 16 ? 0 : 0xffffffff);
-}
-
 void pattern_greys(uint len, uint t) {
     int max = 100; // let's not draw too much current!
     t %= max;
@@ -229,36 +224,6 @@ void pattern_triangle_order(uint len, uint t)
     }
 }
 
-void pattern_vertical_band(uint len, uint t)
-{
-    int bands[5][4]= {
-        { 10, 0, 5, 16}, 
-        { 11, 1, 6, 17}, 
-        { 12, 2, 7, 17}, 
-        { 13, 3, 8, 18}, 
-        { 14, 4, 9, 15} 
-    };
-    
-
-    int tt = remap_triangle[t];
-
-    for(int i = 0; i < len; ++i){
-        int ct = i/21;          // current triangle
-
-        bool active = false;
-        for(int j=0;j<4;++j){
-            active = active |(ct == remap_triangle[bands[t][j]]);
-        }
-
-        if (active){
-            put_pixel(urgb_u32(255, 0, 0));
-        }
-        else{
-            put_pixel(urgb_u32(0, 0, 0));
-        }
-    }
-}
-
 typedef void (*pattern)(uint len, uint t);
 const struct {
     pattern pat;
@@ -268,7 +233,6 @@ const struct {
 //        {pattern_one_by_one,  "One by One"},
 //        {pattern_snakes,  "Snakes!"},
 //        {pattern_random,  "Random data"},
-//        {pattern_sparkle, "Sparkles"},
 //        {pattern_greys,   "Greys"},
 };
 
@@ -316,7 +280,7 @@ int main() {
     pattern_fixed_color(led_buffer, black);
     send_buffer(led_buffer);
 
-#if 1
+#if 0
     // Ring back and forth for each axis.
     {
         StartupRings startup_rings;
@@ -328,6 +292,32 @@ int main() {
             startup_rings.render(led_buffer);
             send_virtual_buffer(led_buffer);
         } while(!done);
+    }
+#endif
+#if 1
+    {
+        RGBSphere rgb_sphere;
+        rgb_sphere.init();
+
+        for(float offset=0.0; offset<50;offset+=0.1){
+            rgb_sphere.calc_next_frame(offset);
+            rgb_sphere.render(led_buffer);
+            send_virtual_buffer(led_buffer);
+            sleep_ms(5);
+        }
+    }
+#endif
+#if 1
+    {
+        Sparkles sparkles;
+        sparkles.init();
+
+        for(int i=0;i<200;++i){
+            sparkles.calc_next_frame(0.0);
+            sparkles.render(led_buffer);
+            send_virtual_buffer(led_buffer);
+            sleep_ms(20);
+        }
     }
 #endif
 #if 1
@@ -416,14 +406,6 @@ int main() {
     while(1){
         for(int t=0;t<20;++t){
             pattern_triangle_order(NUM_PIXELS, t);
-            sleep_ms(1000); 
-        }
-    }
-#endif
-#if 0
-    while(1){
-        for(int t=0;t<5;++t){
-            pattern_vertical_band(NUM_PIXELS, t);
             sleep_ms(1000); 
         }
     }
