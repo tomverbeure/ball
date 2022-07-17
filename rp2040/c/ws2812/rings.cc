@@ -1,6 +1,6 @@
-#include "rings.h"
 
 #include "lib.h"
+#include "rings.h"
 
 void Rings::init()
 {

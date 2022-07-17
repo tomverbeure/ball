@@ -3,7 +3,7 @@ add_executable(pio_ws2812)
 # generate the header file into the source tree as it is included in the RP2040 datasheet
 pico_generate_pio_header(pio_ws2812 ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio OUTPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/generated)
 
-target_sources(pio_ws2812 PRIVATE main.cc lib.cc rings.cc particles.cc I2Cdev.cpp MPU6050.cpp mpu6050_drv.cpp)
+target_sources(pio_ws2812 PRIVATE main.cc lib.cc rings.cc particles.cc pride_flag.cc I2Cdev.cpp MPU6050.cpp mpu6050_drv.cpp)
 
 target_link_libraries(pio_ws2812 PRIVATE pico_stdlib hardware_pio hardware_i2c)
 pico_add_extra_outputs(pio_ws2812)

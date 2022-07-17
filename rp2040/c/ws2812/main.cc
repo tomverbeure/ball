@@ -16,6 +16,7 @@
 #include "rings.h"
 #include "random_rings.h"
 #include "startup_rings.h"
+#include "pride_flag.h"
 
 #define IS_RGBW false
 
@@ -329,7 +330,19 @@ int main() {
         } while(!done);
     }
 #endif
+#if 1
+    {
+        PrideFlag pride_flag;
+        pride_flag.init();
 
+        for(float offset=0.0; offset<50;offset+=0.1){
+            pride_flag.calc_next_frame(offset);
+            pride_flag.render(led_buffer);
+            send_virtual_buffer(led_buffer);
+            sleep_ms(5);
+        }
+    }
+#endif
 #if 1
     RandomRings random_rings;
     while(1){
