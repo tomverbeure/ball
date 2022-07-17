@@ -258,6 +258,19 @@ int reg_read(  i2c_inst_t *i2c,
 
 int main() {
     stdio_init_all();
+
+#if 0
+    // setup blink led
+    gpio_init(PICO_DEFAULT_LED_PIN);
+	gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+	while (!stdio_usb_connected()) { // blink the pico's led until usb connection is established
+		gpio_put(PICO_DEFAULT_LED_PIN, 1);
+		sleep_ms(250);
+		gpio_put(PICO_DEFAULT_LED_PIN, 0);
+		sleep_ms(250);
+	}
+#endif
+
     printf("WS2812 Smoke Test, using pin %d", WS2812_PIN);
 
     init_remap();
@@ -299,11 +312,13 @@ int main() {
         RGBSphere rgb_sphere;
         rgb_sphere.init();
 
-        for(float offset=0.0; offset<50;offset+=0.1){
-            rgb_sphere.calc_next_frame(offset);
-            rgb_sphere.render(led_buffer);
-            send_virtual_buffer(led_buffer);
-            sleep_ms(5);
+        for(int i=0;i<100;++i){
+            for(float offset=-M_PI; offset<M_PI;offset+=0.02){
+                rgb_sphere.calc_next_frame(offset);
+                rgb_sphere.render(led_buffer);
+                send_virtual_buffer(led_buffer);
+                sleep_ms(5);
+            }
         }
     }
 #endif

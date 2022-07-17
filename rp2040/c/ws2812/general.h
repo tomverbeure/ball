@@ -20,6 +20,8 @@ typedef struct s_color {
     uint8_t b;
 } t_color;
 
+typedef float t_matrix3D[3][3];
+
 typedef struct s_vec t_led_coord;
 
 extern const t_vec led_coords[420];

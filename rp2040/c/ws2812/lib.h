@@ -64,6 +64,9 @@ static inline t_vec vec_normalize(t_vec v)
 
 float distance_plane_point(t_plane plane, t_vec point);
 
+void rotation_matrix(t_matrix3D m, float x, float y, float z);
+t_vec matrix_mul_vec(t_matrix3D m, const t_vec &v);
+
 static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b) {
     return
             ((uint32_t) (r) << 16) |

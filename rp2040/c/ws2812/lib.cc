@@ -1,5 +1,7 @@
 #include "lib.h"
 
+#include <stdio.h>
+
 #include "hardware/regs/rosc.h"
 #include "hardware/regs/addressmap.h"
 
@@ -72,4 +74,47 @@ int calc_phys_led_nr(int virt_led_nr)
 
     return led_nr;
 }
+
+void rotation_matrix(t_matrix3D m, float x, float y, float z)
+{
+    float cos_a = cosf(x);
+    float cos_b = cosf(y);
+    float cos_g = cosf(z);
+
+    float sin_a = sinf(x);
+    float sin_b = sinf(y);
+    float sin_g = sinf(z);
+    
+    m[0][0] = cos_b * cos_g;
+    m[0][1] = sin_a * sin_b * cos_g - cos_a * sin_g;
+    m[0][2] = cos_a * sin_b * cos_g + sin_a * sin_g;
+
+    m[1][0] = cos_b * sin_g;
+    m[1][1] = sin_a * sin_b * sin_g + cos_a * cos_g;
+    m[1][2] = cos_a * sin_b * sin_g - sin_a * cos_g;
+
+    m[2][0] = -sin_b;
+    m[2][1] = sin_a * cos_b;
+    m[2][2] = cos_a * cos_b;
+
+    for(int y=0;y<3;++y){
+        for(int x=0;x<3;++x){
+            printf("%f ", m[y][x]);
+        }
+            printf("\n");
+    }
+}
+
+t_vec matrix_mul_vec(t_matrix3D m, const t_vec &v)
+{
+    t_vec r;
+
+    r.x = m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z;
+    r.y = m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z;
+    r.z = m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z;
+
+    return r;
+}
+
+
 
