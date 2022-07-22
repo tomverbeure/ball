@@ -5,7 +5,9 @@
 # runpy.run_path(path_name='/Users/tverbeure/projects/ball/rev1/script.py')
 # runpy.run_path(path_name='/Users/tom/projects/ball/rev1/script.py')
 
+import os
 import math
+import json
 import Part
 import Draft
 from FreeCAD import Base
@@ -829,16 +831,16 @@ sphere.Placement.Rotation = rev_rotate_main_verts
 pcb.Placement.Rotation = rev_rotate_main_verts
 #Part.show(sphere)
 
-if None:
-    final_led_coords = []
+final_led_coords = []
 
-    for r in range(0,5):
-        for l in led_locations:
-            lr = rev_rotate_main_verts.multVec(l)
+def add_final_led_coords(led_locations, r):
+    for l in led_locations:
+        lr = r.multVec(l)
+        final_led_coords.append(lr)
 
-            s = Part.makeSphere(1)
-            s.Placement.Base = lr
-            Part.show(s)
+        #s = Part.makeSphere(1)
+        #s.Placement.Base = lr
+        #Part.show(s)
 
 if True:
     for i in range(0,5):
@@ -846,11 +848,15 @@ if True:
         sphere.Placement.Rotation = r
         Part.show(sphere)
 
+        add_final_led_coords(led_locations, r)
+
 if True:
     for i in range(0,5):
         r = App.Rotation(Base.Vector(1,0,0), 180).multiply(App.Rotation(Base.Vector(0, 0, -1), (i + 0.5) * (360/5))).multiply(rev_rotate_main_verts)
         sphere.Placement.Rotation = r
         Part.show(sphere)
+
+        add_final_led_coords(led_locations, r)
 
 if True:
     for i in range(0,5):
@@ -859,29 +865,38 @@ if True:
         sphere.Placement.Rotation = r
         Part.show(sphere)
 
+        add_final_led_coords(led_locations, r)
+
 if True:
     for i in range(0,5):
         r = App.Rotation(Base.Vector(0, 0, -1), (i+0.5) * (360/5)).multiply(rev_rotate_main_verts).multiply(App.Rotation(Base.Vector(0,1,0), -63.434948))
         sphere.Placement.Rotation = r
         Part.show(sphere)
 
+        add_final_led_coords(led_locations, r)
 
+led_json = []
+if True:
+    for l in final_led_coords:
+        led_json.append([l.x, l.y, l.z])
+    j = json.dumps(json.loads(json.dumps(led_json), parse_float=lambda x: round(float(x), 1)))
 
-#Part.show(pcb)
-#Part.show(inner_center)
-#Part.show(inner_left)
-#Part.show(inner_right)
+    fn = os.path.join(os.path.expanduser("~"), "led_coords.json")
+    f = open(fn, "w")
+    f.write(j)
+    f.close()
 
-#Part.show(sphere)
+    App.Console.PrintMessage("\n")
+    App.Console.PrintMessage("LED coordinates dumped to: " + fn)
 
-#main_triangle_verts, main_triangle_normal, rev_rotate_main_verts = create_triangle_vertices(penta_radius)
-
+if False:
+    Part.show(sphere)
+    Part.show(pcb)
+    Part.show(inner_center)
+    Part.show(inner_left)
+    Part.show(inner_right)
 
 App.ActiveDocument.recompute()
 Gui.activeDocument().activeView().viewRight()
 Gui.SendMsgToActiveView("ViewFit")
-
-#f = open("C:\\Users\\tverbeure\\projects\\ball\\test.txt", "w")
-#f.write("Hello world!\n")
-#f.close()
 
