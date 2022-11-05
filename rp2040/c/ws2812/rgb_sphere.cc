@@ -11,6 +11,8 @@ void RGBSphere::init()
 int RGBSphere::calc_next_frame(float offset)
 {
     this->offset = offset;
+
+    return 0;
 }
 
 void RGBSphere::render(t_color led_buffer[NUM_PIXELS])

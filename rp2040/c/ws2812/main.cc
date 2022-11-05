@@ -22,6 +22,12 @@
 
 #define IS_RGBW false
 
+#define STARTUP_EFFECT          1
+#define RGB_SPHERE_EFFECT       0
+#define SPARKLES_EFFECT         1
+#define PRIDE_FLAG_EFFECT       1
+#define RANDOM_RINGS_EFFECT     1
+
 const int max_value = 30;
 
 const t_color black   = { 0,0,0 };
@@ -296,7 +302,7 @@ int main() {
     send_buffer(led_buffer);
 
     while(1){
-#if 1
+#if STARTUP_EFFECT==1
         // Ring back and forth for each axis.
         {
             StartupRings startup_rings;
@@ -310,13 +316,13 @@ int main() {
             } while(!done);
         }
 #endif
-#if 0
+#if RGB_SPHERE_EFFECT==1
         {
             RGBSphere rgb_sphere;
             rgb_sphere.init();
 
-            for(int i=0;i<100;++i){
-                for(float offset=-M_PI; offset<M_PI;offset+=0.02){
+            for(int i=0;i<10;++i){
+                for(float offset=-M_PI; offset<M_PI;offset+=0.12){
                     rgb_sphere.calc_next_frame(offset);
                     rgb_sphere.render(led_buffer);
                     send_virtual_buffer(led_buffer);
@@ -325,7 +331,7 @@ int main() {
             }
         }
 #endif
-#if 1
+#if SPARKLES_EFFECT==1
         {
             Sparkles sparkles;
             sparkles.init();
@@ -338,7 +344,7 @@ int main() {
             }
         }
 #endif
-#if 1
+#if PRIDE_FLAG_EFFECT==1
         {
             PrideFlag pride_flag;
             pride_flag.init();
@@ -351,7 +357,7 @@ int main() {
             }
         }
 #endif
-#if 1
+#if RANDOM_RINGS_EFFECT==1
         {
             RandomRings random_rings;
             for(int i=0; i<20;++i){
