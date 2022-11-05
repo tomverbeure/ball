@@ -117,14 +117,14 @@ void send_buffer(t_color led_buffer[NUM_PIXELS])
 {
     for(int i=0; i<NUM_PIXELS;++i){
         put_pixel(led_buffer[i]);
-    }   
+    }
 }
 
 void send_virtual_buffer(t_color led_buffer[NUM_PIXELS])
 {
     for(int i=0; i<NUM_PIXELS;++i){
         put_pixel(led_buffer[remap_led_phys_to_virt[i]]);
-    }   
+    }
 }
 
 void pattern_fixed_color(t_color led_buffer[NUM_PIXELS], const t_color &c) {
@@ -262,13 +262,13 @@ int main() {
 #if 0
     // setup blink led
     gpio_init(PICO_DEFAULT_LED_PIN);
-	gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-	while (!stdio_usb_connected()) { // blink the pico's led until usb connection is established
-		gpio_put(PICO_DEFAULT_LED_PIN, 1);
-		sleep_ms(250);
-		gpio_put(PICO_DEFAULT_LED_PIN, 0);
-		sleep_ms(250);
-	}
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+    while (!stdio_usb_connected()) { // blink the pico's led until usb connection is established
+        gpio_put(PICO_DEFAULT_LED_PIN, 1);
+        sleep_ms(250);
+        gpio_put(PICO_DEFAULT_LED_PIN, 0);
+        sleep_ms(250);
+    }
 #endif
 
     printf("WS2812 Smoke Test, using pin %d", WS2812_PIN);
@@ -282,8 +282,10 @@ int main() {
 
     ws2812_program_init(pio, sm, offset, WS2812_PIN, 800000, IS_RGBW);
 
+#if 0
     mpu6050_init();
     mpu6050_gravity();
+#endif
 
     int t = 0;
 
@@ -293,76 +295,79 @@ int main() {
     pattern_fixed_color(led_buffer, black);
     send_buffer(led_buffer);
 
-#if 0
-    // Ring back and forth for each axis.
-    {
-        StartupRings startup_rings;
-        startup_rings.init();
+    while(1){
+#if 1
+        // Ring back and forth for each axis.
+        {
+            StartupRings startup_rings;
+            startup_rings.init();
 
-        bool done;
-        do {
-            done = startup_rings.calc_next_frame();
-            startup_rings.render(led_buffer);
-            send_virtual_buffer(led_buffer);
-        } while(!done);
-    }
+            bool done;
+            do {
+                done = startup_rings.calc_next_frame();
+                startup_rings.render(led_buffer);
+                send_virtual_buffer(led_buffer);
+            } while(!done);
+        }
+#endif
+#if 0
+        {
+            RGBSphere rgb_sphere;
+            rgb_sphere.init();
+
+            for(int i=0;i<100;++i){
+                for(float offset=-M_PI; offset<M_PI;offset+=0.02){
+                    rgb_sphere.calc_next_frame(offset);
+                    rgb_sphere.render(led_buffer);
+                    send_virtual_buffer(led_buffer);
+                    sleep_ms(5);
+                }
+            }
+        }
 #endif
 #if 1
-    {
-        RGBSphere rgb_sphere;
-        rgb_sphere.init();
+        {
+            Sparkles sparkles;
+            sparkles.init();
 
-        for(int i=0;i<100;++i){
-            for(float offset=-M_PI; offset<M_PI;offset+=0.02){
-                rgb_sphere.calc_next_frame(offset);
-                rgb_sphere.render(led_buffer);
+            for(int i=0;i<100;++i){
+                sparkles.calc_next_frame(0.0);
+                sparkles.render(led_buffer);
+                send_virtual_buffer(led_buffer);
+                sleep_ms(20);
+            }
+        }
+#endif
+#if 1
+        {
+            PrideFlag pride_flag;
+            pride_flag.init();
+
+            for(float offset=0.0; offset<50;offset+=0.1){
+                pride_flag.calc_next_frame(offset);
+                pride_flag.render(led_buffer);
                 send_virtual_buffer(led_buffer);
                 sleep_ms(5);
             }
         }
-    }
 #endif
 #if 1
-    {
-        Sparkles sparkles;
-        sparkles.init();
-
-        for(int i=0;i<200;++i){
-            sparkles.calc_next_frame(0.0);
-            sparkles.render(led_buffer);
-            send_virtual_buffer(led_buffer);
-            sleep_ms(20);
-        }
-    }
-#endif
-#if 1
-    {
-        PrideFlag pride_flag;
-        pride_flag.init();
-
-        for(float offset=0.0; offset<50;offset+=0.1){
-            pride_flag.calc_next_frame(offset);
-            pride_flag.render(led_buffer);
-            send_virtual_buffer(led_buffer);
-            sleep_ms(5);
-        }
-    }
-#endif
-#if 1
-    RandomRings random_rings;
-    while(1){
         {
-            random_rings.init();
+            RandomRings random_rings;
+            for(int i=0; i<20;++i){
+                random_rings.init();
 
-            bool done;
-            do {
-                done = random_rings.calc_next_frame();
-                random_rings.render(led_buffer);
-                send_virtual_buffer(led_buffer);
-            } while(!done);
+                bool done;
+                do {
+                    done = random_rings.calc_next_frame();
+                    random_rings.render(led_buffer);
+                    send_virtual_buffer(led_buffer);
+                } while(!done);
+            }
         }
-    }
 #endif
+    }
+
 
 
 #if 0
