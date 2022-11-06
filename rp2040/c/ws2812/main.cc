@@ -23,7 +23,7 @@
 #define IS_RGBW false
 
 #define STARTUP_EFFECT          1
-#define RGB_SPHERE_EFFECT       0
+#define RGB_SPHERE_EFFECT       1
 #define SPARKLES_EFFECT         1
 #define PRIDE_FLAG_EFFECT       1
 #define RANDOM_RINGS_EFFECT     1
@@ -301,7 +301,6 @@ int main() {
     pattern_fixed_color(led_buffer, black);
     send_buffer(led_buffer);
 
-    while(1){
 #if STARTUP_EFFECT==1
         // Ring back and forth for each axis.
         {
@@ -316,13 +315,15 @@ int main() {
             } while(!done);
         }
 #endif
+
+    while(1){
 #if RGB_SPHERE_EFFECT==1
         {
             RGBSphere rgb_sphere;
             rgb_sphere.init();
 
-            for(int i=0;i<10;++i){
-                for(float offset=-M_PI; offset<M_PI;offset+=0.12){
+            for(int i=0;i<7;++i){
+                for(float offset=-M_PI; offset<M_PI;offset+=0.063){
                     rgb_sphere.calc_next_frame(offset);
                     rgb_sphere.render(led_buffer);
                     send_virtual_buffer(led_buffer);
@@ -336,7 +337,7 @@ int main() {
             Sparkles sparkles;
             sparkles.init();
 
-            for(int i=0;i<100;++i){
+            for(int i=0;i<50;++i){
                 sparkles.calc_next_frame(0.0);
                 sparkles.render(led_buffer);
                 send_virtual_buffer(led_buffer);
