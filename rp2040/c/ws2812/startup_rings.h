@@ -35,7 +35,7 @@ class StartupRings : public Rings
         spacing_thickness = 0.4;
 
         total_thickness = (nr_rings * ring_thickness) + ((nr_rings-1) * spacing_thickness);
-        speed = 0.1;
+        speed = 0.10;
 
         offset = -total_thickness-speed;
 
